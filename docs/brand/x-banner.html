@@ -1,0 +1,72 @@
+<meta charset="utf-8">
+<style>
+@font-face{font-family:"Sora";src:url(data:font/woff2;base64,__SORA__) format("woff2");font-weight:400 700;font-display:block}
+@font-face{font-family:"Jakarta";src:url(data:font/woff2;base64,__JAKARTA__) format("woff2");font-weight:400 700;font-display:block}
+@font-face{font-family:"JBMono";src:url(data:font/woff2;base64,__MONO__) format("woff2");font-weight:400 700;font-display:block}
+:root{
+  --bg:#0C0718; --txt:#F1EDFF; --txt-2:#948BB4; --txt-3:#6B6390;
+  --line-2:rgba(241,237,255,.16);
+  --violet:#7C5CFF; --violet-lt:#A78BFA;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#222;font-family:"Jakarta",sans-serif}
+.plate{position:relative;overflow:hidden;background:var(--bg);width:1500px;height:500px;margin-bottom:24px}
+
+/* The aperture opened into a full ring system — the hero portal, drawn rather
+   than blurred. Every stroke is crisp; the only glow is the core, which is the
+   one element the design system lets glow. */
+.rings{position:absolute;left:0;top:0;width:1500px;height:500px}
+.core{position:absolute;left:1180px;top:250px;width:40px;height:40px;margin:-20px 0 0 -20px;
+  border-radius:50%;background:var(--violet);box-shadow:0 0 46px rgba(124,92,255,.55)}
+
+.lock{position:absolute;left:112px;top:62px}
+.eyebrow{font-family:"JBMono",monospace;font-size:16px;font-weight:500;letter-spacing:.30em;
+  text-transform:uppercase;color:var(--txt-3);display:block}
+.word{font-family:"Sora",sans-serif;font-weight:600;font-size:104px;letter-spacing:-.05em;
+  color:var(--txt);line-height:1;display:block;margin-top:20px}
+.rule{display:block;width:104px;height:3px;background:var(--violet);margin-top:26px;border-radius:2px}
+.tag{font-family:"Jakarta",sans-serif;font-size:29px;color:var(--txt-2);display:block;
+  margin-top:22px;letter-spacing:-.008em}
+
+
+.guide{position:absolute;outline:2px dashed rgba(248,113,137,.9);pointer-events:none}
+</style>
+
+<div class="plate" id="b2">
+  <svg class="rings" viewBox="0 0 1500 500" fill="none">
+    <!-- concentric right-opening arcs, common centre at (1180,250) -->
+    <path d="M1180 188a62 62 0 0 1 0 124"  stroke="#7C5CFF" stroke-opacity=".85" stroke-width="15" stroke-linecap="round"/>
+    <path d="M1180 134a116 116 0 0 1 0 232" stroke="#7C5CFF" stroke-opacity=".58" stroke-width="12" stroke-linecap="round"/>
+    <path d="M1180 76a174 174 0 0 1 0 348"  stroke="#7C5CFF" stroke-opacity=".38" stroke-width="10" stroke-linecap="round"/>
+    <path d="M1180 14a236 236 0 0 1 0 472"  stroke="#7C5CFF" stroke-opacity=".25" stroke-width="8"  stroke-linecap="round"/>
+    <path d="M1180 -52a302 302 0 0 1 0 604" stroke="#7C5CFF" stroke-opacity=".16" stroke-width="6"  stroke-linecap="round"/>
+    <path d="M1180 -122a372 372 0 0 1 0 744" stroke="#7C5CFF" stroke-opacity=".10" stroke-width="5" stroke-linecap="round"/>
+  </svg>
+  <div class="core"></div>
+  <div class="lock">
+    <span class="eyebrow">Solana · port of entry</span>
+    <span class="word">Tare</span>
+    <span class="rule"></span>
+    <span class="tag">Capital arriving on Solana, and whether it stayed.</span>
+  </div>
+</div>
+
+<div class="plate" id="b2-guides">
+  <svg class="rings" viewBox="0 0 1500 500" fill="none">
+    <path d="M1180 188a62 62 0 0 1 0 124"  stroke="#7C5CFF" stroke-opacity=".85" stroke-width="15" stroke-linecap="round"/>
+    <path d="M1180 134a116 116 0 0 1 0 232" stroke="#7C5CFF" stroke-opacity=".58" stroke-width="12" stroke-linecap="round"/>
+    <path d="M1180 76a174 174 0 0 1 0 348"  stroke="#7C5CFF" stroke-opacity=".38" stroke-width="10" stroke-linecap="round"/>
+    <path d="M1180 14a236 236 0 0 1 0 472"  stroke="#7C5CFF" stroke-opacity=".25" stroke-width="8"  stroke-linecap="round"/>
+    <path d="M1180 -52a302 302 0 0 1 0 604" stroke="#7C5CFF" stroke-opacity=".16" stroke-width="6"  stroke-linecap="round"/>
+    <path d="M1180 -122a372 372 0 0 1 0 744" stroke="#7C5CFF" stroke-opacity=".10" stroke-width="5" stroke-linecap="round"/>
+  </svg>
+  <div class="core"></div>
+  <div class="lock">
+    <span class="eyebrow">Solana · port of entry</span>
+    <span class="word">Tare</span>
+    <span class="rule"></span>
+    <span class="tag">Capital arriving on Solana, and whether it stayed.</span>
+  </div>
+  <div class="guide" style="left:50px;top:325px;width:350px;height:350px;border-radius:50%"></div>
+  <div class="guide" style="left:0;top:60px;width:1500px;height:380px"></div>
+</div>
