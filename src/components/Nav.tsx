@@ -3,7 +3,7 @@ import { Freshness } from "@/components/Freshness";
 
 export function Nav() {
   return (
-    <nav>
+    <nav aria-label="Primary">
       <div className="nav-in">
         <a className="brand" href="/" aria-label="Tare home">
           <BrandMark />

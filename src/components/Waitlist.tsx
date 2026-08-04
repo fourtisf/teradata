@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { SOCIAL, SOCIAL_LINKS } from "@/lib/config/site";
 
 type State = { kind: "idle" | "sending" | "done" } | { kind: "error"; message: string };
@@ -17,7 +17,7 @@ export function Waitlist() {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<State>({ kind: "idle" });
 
-  const submit = async (event: React.FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (state.kind === "sending") return;
     setState({ kind: "sending" });

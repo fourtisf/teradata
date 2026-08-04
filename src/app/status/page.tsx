@@ -60,7 +60,7 @@ export default async function StatusPage() {
 
         <CoverageSection coverage={coverage} status={status} source={provider.source} />
 
-        <section>
+        <section id="changelog">
           <Reveal className="s-head">
             <span className="eyebrow">Changelog</span>
             <h2>Every change to how the number is measured</h2>

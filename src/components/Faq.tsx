@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Reveal } from "@/components/Reveal";
 
 /**
@@ -7,7 +8,7 @@ import { Reveal } from "@/components/Reveal";
  * is only worth as much as the honesty about its edges, and that applies to
  * the sales copy as much as the coverage section.
  */
-const QUESTIONS: Array<{ q: string; a: React.ReactNode }> = [
+const QUESTIONS: Array<{ q: string; a: ReactNode }> = [
   {
     q: "Why is your number smaller than DefiLlama's?",
     a: (
