@@ -1,0 +1,100 @@
+<meta charset="utf-8">
+<style>
+@font-face{font-family:"Sora";src:url(data:font/woff2;base64,__SORA__) format("woff2");font-weight:400 700;font-display:block}
+@font-face{font-family:"Jakarta";src:url(data:font/woff2;base64,__JAKARTA__) format("woff2");font-weight:400 700;font-display:block}
+@font-face{font-family:"JBMono";src:url(data:font/woff2;base64,__MONO__) format("woff2");font-weight:400 700;font-display:block}
+:root{
+  --bg:#0C0718; --surface:#171029;
+  --txt:#F1EDFF; --txt-2:#948BB4; --txt-3:#6B6390;
+  --violet:#7C5CFF; --violet-lt:#A78BFA;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#222;font-family:"Jakarta",sans-serif}
+.plate{position:relative;overflow:hidden;background:var(--bg)}
+
+/* ---------------- avatar ---------------- */
+#avatar,#avatar-alt{width:400px;height:400px;display:grid;place-items:center}
+#avatar-alt{background:var(--violet)}
+/* X renders avatars in a circle. The mark sits well inside it, and the glow is
+   the one flourish the design system allows — it belongs to the portal. */
+.halo{position:absolute;width:70%;aspect-ratio:1;border-radius:50%;filter:blur(52px);
+  background:radial-gradient(circle,rgba(124,92,255,.42),transparent 68%)}
+.mk{position:relative;display:block}
+
+/* ---------------- banner ---------------- */
+#banner,#banner-guides{width:1500px;height:500px}
+.b-art{position:absolute;right:-300px;top:-130px;
+  width:760px;height:760px;display:grid;place-items:center}
+.b-halo{position:absolute;width:66%;aspect-ratio:1;border-radius:50%;filter:blur(70px);
+  background:radial-gradient(circle,rgba(124,92,255,.34),transparent 70%)}
+.b-lockup{position:absolute;left:112px;top:84px;display:flex;flex-direction:column;gap:0}
+.b-row{display:flex;align-items:center;gap:22px}
+.b-word{font-family:"Sora",sans-serif;font-weight:600;font-size:88px;letter-spacing:-.045em;
+  color:var(--txt);line-height:1}
+.b-tag{font-family:"Jakarta",sans-serif;font-size:27px;color:var(--txt-2);margin-top:22px;
+  letter-spacing:-.005em}
+.b-meta{display:flex;align-items:center;gap:16px;margin-top:20px;
+  font-family:"JBMono",monospace;font-size:19px;color:var(--txt-3);letter-spacing:.04em}
+.b-meta i{width:5px;height:5px;border-radius:50%;background:var(--txt-3);display:block}
+/* Bottom-left is where X drops the avatar. Nothing goes there. */
+.guide{position:absolute;outline:2px dashed rgba(248,113,137,.9);pointer-events:none}
+
+/* ---------------- legibility strip ---------------- */
+#strip{width:760px;height:180px;background:var(--bg);display:flex;align-items:center;
+  gap:34px;padding:0 34px}
+#strip .cell{display:flex;flex-direction:column;align-items:center;gap:10px}
+#strip img{border-radius:50%;display:block}
+#strip em{font-family:"JBMono",monospace;font-size:11px;font-style:normal;color:var(--txt-3)}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="aperture" viewBox="0 0 32 32">
+    <path d="M11.4 4.2a11.8 11.8 0 0 1 0 23.6" fill="none" stroke="currentColor"
+          stroke-width="1.9" stroke-linecap="round"/>
+    <path d="M11.4 8.8a7.2 7.2 0 0 1 0 14.4" fill="none" stroke="currentColor"
+          stroke-width="2.6" stroke-linecap="round"/>
+    <circle cx="11.4" cy="16" r="3.5" fill="currentColor"/>
+  </symbol>
+</defs></svg>
+
+<div class="plate" id="avatar">
+  <div class="halo"></div>
+  <svg class="mk" width="340" height="340" style="color:var(--violet)"><use href="#aperture"/></svg>
+</div>
+
+<div class="plate" id="avatar-alt">
+  <svg class="mk" width="340" height="340" style="color:var(--bg)"><use href="#aperture"/></svg>
+</div>
+
+<div class="plate" id="banner">
+  <div class="b-art">
+    <div class="b-halo"></div>
+    <svg class="mk" width="700" height="700" style="color:rgba(124,92,255,.26)"><use href="#aperture"/></svg>
+  </div>
+  <div class="b-lockup">
+    <div class="b-row"><span class="b-word">Tare</span></div>
+    <span class="b-tag">Capital arriving on Solana, and whether it stayed.</span>
+    <span class="b-meta"><span>taredata.com</span><i></i><span>net, not gross</span></span>
+  </div>
+</div>
+
+<div class="plate" id="banner-guides">
+  <div class="b-art"><div class="b-halo"></div>
+    <svg class="mk" width="700" height="700" style="color:rgba(124,92,255,.26)"><use href="#aperture"/></svg></div>
+  <div class="b-lockup">
+    <div class="b-row"><span class="b-word">Tare</span></div>
+    <span class="b-tag">Capital arriving on Solana, and whether it stayed.</span>
+    <span class="b-meta"><span>taredata.com</span><i></i><span>net, not gross</span></span>
+  </div>
+  <div class="guide" style="left:50px;top:325px;width:350px;height:350px;border-radius:50%"></div>
+  <div class="guide" style="left:0;top:60px;width:1500px;height:380px"></div>
+</div>
+
+<div id="strip">
+  <div class="cell"><img id="s96"  width="96"  height="96"><em>96px</em></div>
+  <div class="cell"><img id="s48"  width="48"  height="48"><em>48px timeline</em></div>
+  <div class="cell"><img id="s32"  width="32"  height="32"><em>32px reply</em></div>
+  <div class="cell"><img id="v96"  width="96"  height="96"><em>violet 96px</em></div>
+  <div class="cell"><img id="v48"  width="48"  height="48"><em>violet 48px</em></div>
+  <div class="cell"><img id="v32"  width="32"  height="32"><em>violet 32px</em></div>
+</div>
