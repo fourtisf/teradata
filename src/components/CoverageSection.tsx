@@ -1,14 +1,16 @@
 import { Reveal } from "@/components/Reveal";
 import { StatusStrip } from "@/components/StatusStrip";
-import type { Coverage, IndexerStatus } from "@/lib/data/types";
+import type { Coverage, DataSource, IndexerStatus } from "@/lib/data/types";
 
 /** A flow number is only worth as much as the honesty about its edges. */
 export function CoverageSection({
   coverage,
   status,
+  source,
 }: {
   coverage: Coverage;
   status: IndexerStatus;
+  source: DataSource;
 }) {
   return (
     <section id="coverage">
@@ -49,7 +51,7 @@ export function CoverageSection({
       </div>
 
       <Reveal>
-        <StatusStrip status={status} />
+        <StatusStrip status={status} source={source} />
       </Reveal>
     </section>
   );

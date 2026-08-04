@@ -10,6 +10,7 @@ import { Nav } from "@/components/Nav";
 import { OriginsSection } from "@/components/OriginsSection";
 import { Pricing } from "@/components/Pricing";
 import { Reveal } from "@/components/Reveal";
+import { SimNotice } from "@/components/SimNotice";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getDataProvider } from "@/lib/data";
 
@@ -29,6 +30,7 @@ export default async function HomePage() {
   return (
     <>
       <Nav />
+      {provider.source === "sim" ? <SimNotice /> : null}
 
       <div className="wrap" id="top">
         <Hero summaries={snapshot.summaries} origins={snapshot.origins} />
@@ -72,7 +74,11 @@ export default async function HomePage() {
         <OriginsSection origins={snapshot.origins} />
         <MethodSection />
         <AlertsSection summary={today} date={snapshot.status.updatedAt} />
-        <CoverageSection coverage={snapshot.coverage} status={snapshot.status} />
+        <CoverageSection
+          coverage={snapshot.coverage}
+          status={snapshot.status}
+          source={provider.source}
+        />
         <Pricing />
         <SiteFooter />
       </div>

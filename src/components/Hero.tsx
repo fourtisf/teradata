@@ -1,3 +1,4 @@
+import { ContractAddress } from "@/components/ContractAddress";
 import { Portal } from "@/components/Portal";
 import { RangeFigures } from "@/components/RangeFigures";
 import type { FlowSummary, OriginCard, Range } from "@/lib/data/types";
@@ -28,6 +29,9 @@ export function Hero({
           <a className="btn btn-ghost" href="#method">
             How it&rsquo;s measured
           </a>
+        </div>
+        <div className="ca-row">
+          <ContractAddress />
         </div>
         <RangeFigures summaries={summaries} />
       </div>

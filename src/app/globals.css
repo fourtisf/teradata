@@ -65,6 +65,10 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  /* The portal's outermost ring is scaled past its box as it rotates. `body`
+     alone does not hold it on every mobile browser — the document scrolls
+     instead — so the clip is declared on both. */
+  overflow-x: hidden;
 }
 
 body {
@@ -1797,4 +1801,83 @@ footer {
     opacity: 1;
     transform: none;
   }
+}
+
+/* --------------------------------------------------- contract address ----- */
+
+/* Neutral by design: violet, green and rose each mean exactly one thing on
+   this site (§5), and none of them mean "token". */
+.ca {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  border: 1px solid var(--line-2);
+  border-radius: 9px;
+  padding: 7px 12px;
+  color: var(--txt-2);
+  background: none;
+  transition: border-color 0.22s ease;
+}
+
+.ca .k {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--txt-3);
+}
+
+.ca .v {
+  color: var(--txt);
+  font-variant-numeric: tabular-nums;
+}
+
+.ca .soon {
+  color: var(--txt-3);
+}
+
+.ca-btn {
+  cursor: pointer;
+}
+
+.ca-btn:hover {
+  border-color: var(--txt-3);
+}
+
+.ca-row {
+  margin-top: 18px;
+}
+
+/* ------------------------------------------------------ simulated data ---- */
+
+/* The figures on this page are invented while DATA_SOURCE=sim. Saying so is
+   not optional once the page is public — see the note in SimNotice. */
+.simbar {
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.simbar-in {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 9px;
+  padding-bottom: 9px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--txt-3);
+}
+
+.simbar b {
+  color: var(--txt-2);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  border: 1px solid var(--line-2);
+  border-radius: 5px;
+  padding: 3px 7px;
+  flex: none;
 }

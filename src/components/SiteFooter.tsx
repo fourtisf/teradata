@@ -1,3 +1,4 @@
+import { ContractAddress } from "@/components/ContractAddress";
 import { Reveal } from "@/components/Reveal";
 
 export function SiteFooter() {
@@ -15,6 +16,7 @@ export function SiteFooter() {
 
       <div className="fbot">
         <span>Tare · Capital arriving on Solana</span>
+        <ContractAddress />
         <span className="flinks">
           <a href="#method">Method</a>
           <a href="#coverage">Coverage</a>

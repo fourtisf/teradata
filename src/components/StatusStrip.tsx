@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Freshness } from "@/components/Freshness";
 import { count, percent, seconds } from "@/lib/format";
-import type { IndexerStatus } from "@/lib/data/types";
+import type { DataSource, IndexerStatus } from "@/lib/data/types";
 
 const STATE_LABEL: Record<IndexerStatus["state"], string> = {
   live: "Live",
@@ -19,7 +19,9 @@ const STATE_LABEL: Record<IndexerStatus["state"], string> = {
  * origin breakdown, and the page says how much of the figure that is rather
  * than guessing an origin to make the table look complete.
  */
-export function StatusStrip({ status }: { status: IndexerStatus }) {
+export function StatusStrip({ status, source }: { status: IndexerStatus; source: DataSource }) {
+  // "Live" next to a simulated feed is the one lie the status page cannot tell.
+  const simulated = source === "sim";
   const [slot, setSlot] = useState(status.lastSlot);
 
   useEffect(() => {
@@ -33,7 +35,9 @@ export function StatusStrip({ status }: { status: IndexerStatus }) {
     <div className="status">
       <div className="st">
         <div className="k">Indexer</div>
-        <div className={status.state === "live" ? "v ok" : "v"}>{STATE_LABEL[status.state]}</div>
+        <div className={!simulated && status.state === "live" ? "v ok" : "v"}>
+          {simulated ? "Simulated" : STATE_LABEL[status.state]}
+        </div>
       </div>
       <div className="st">
         <div className="k">Last slot processed</div>
