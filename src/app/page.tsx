@@ -4,7 +4,7 @@ import { DwellSection } from "@/components/DwellSection";
 import { FirstUseSection } from "@/components/FirstUseSection";
 import { FlowChart } from "@/components/FlowChart";
 import { Hero } from "@/components/Hero";
-import { ManifestFeed } from "@/components/ManifestFeed";
+import { ArrivalsFeed } from "@/components/ArrivalsFeed";
 import { MethodSection } from "@/components/MethodSection";
 import { Nav } from "@/components/Nav";
 import { OriginsSection } from "@/components/OriginsSection";
@@ -14,10 +14,10 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { getDataProvider } from "@/lib/data";
 
 /**
- * The manifest is a live surface: it is rendered per request rather than cached,
- * so the freshness indicator and the feed are not counting up from a stale
- * snapshot. The ISR'd public pages in §8 — /origin, /route, /day — are P6 and
- * have the opposite requirement.
+ * The arrivals feed is a live surface: it is rendered per request rather than
+ * cached, so the freshness indicator and the feed are not counting up from a
+ * stale snapshot. The ISR'd public pages in §8 — /origin, /route, /day — are P6
+ * and have the opposite requirement.
  */
 export const dynamic = "force-dynamic";
 
@@ -49,7 +49,7 @@ export default async function HomePage() {
 
         <section>
           <Reveal className="s-head">
-            <span className="eyebrow">The manifest</span>
+            <span className="eyebrow">Arrivals</span>
             <h2>Every entry over $100K, as it lands</h2>
             <p>
               Click any line to open its trace: origin transaction, settlement, recipient, and what
@@ -57,7 +57,7 @@ export default async function HomePage() {
             </p>
           </Reveal>
           <Reveal>
-            <ManifestFeed
+            <ArrivalsFeed
               initialEntries={snapshot.entries}
               entryCount={today.entryCount}
               medianLagMs={today.medianLagMs}

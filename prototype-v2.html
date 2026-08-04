@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Manifest — Capital arriving on Solana</title>
+<title>Tare — Capital arriving on Solana</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -111,7 +111,7 @@ section{padding:clamp(48px,6.5vw,84px) 0;border-top:1px solid var(--line)}
 .tip{position:absolute;pointer-events:none;background:var(--surface-2);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;font-size:12px;opacity:0;transition:opacity .18s ease;z-index:20;white-space:nowrap}
 .tip b{font-family:var(--mono);display:block;font-size:13px;margin-top:3px}
 
-/* manifest */
+/* arrivals */
 .p-top{display:flex;align-items:center;gap:12px;padding:15px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .p-top h3{font-family:var(--display);font-size:15px;font-weight:600;margin-right:auto}
 .mini{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-3);background:none;border:1px solid var(--line-2);border-radius:7px;padding:6px 10px;cursor:pointer;transition:all .22s ease}
@@ -307,13 +307,8 @@ footer{padding:clamp(42px,5.5vw,68px) 0 44px;border-top:1px solid var(--line)}
 <nav>
   <div class="nav-in">
     <a class="brand" href="#top">
-      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
-        <rect width="26" height="26" rx="8" fill="#7C5CFF"/>
-        <path d="M5.6 8.4A6.6 6.6 0 0 1 5.6 17.6" stroke="#0C0718" stroke-width="1.6" stroke-linecap="round"/>
-        <path d="M9.4 10.2a3.4 3.4 0 0 1 0 5.6" stroke="#0C0718" stroke-width="1.6" stroke-linecap="round"/>
-        <circle cx="17.2" cy="13" r="3.1" fill="#0C0718"/>
-      </svg>
-      <b>Manifest</b>
+      <svg width="30" height="30" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M11.4 4.2a11.8 11.8 0 0 1 0 23.6" stroke="#7C5CFF" stroke-width="1.9" stroke-linecap="round"/><path d="M11.4 8.8a7.2 7.2 0 0 1 0 14.4" stroke="#7C5CFF" stroke-width="2.6" stroke-linecap="round"/><circle cx="11.4" cy="16" r="3.5" fill="#7C5CFF"/></svg>
+      <b>Tare</b>
     </a>
     <span class="fresh"><span class="dot"></span><span id="freshLbl">updated 0s ago</span></span>
     <a class="btn btn-primary" href="#access">Watch the port</a>
@@ -385,7 +380,7 @@ footer{padding:clamp(42px,5.5vw,68px) 0 44px;border-top:1px solid var(--line)}
 
 <section>
   <div class="s-head rv">
-    <span class="eyebrow">The manifest</span>
+    <span class="eyebrow">Arrivals</span>
     <h2>Every entry over $100K, as it lands</h2>
     <p>Click any line to open its trace: origin transaction, settlement, recipient, and what the capital did first.</p>
   </div>
@@ -461,7 +456,7 @@ footer{padding:clamp(42px,5.5vw,68px) 0 44px;border-top:1px solid var(--line)}
   <div class="method">
     <div class="card pad rv">
       <p>Every other dashboard reports <strong>gross bridge volume</strong>. A market maker moving $40M in and $40M back out within the hour adds $80M to that figure while leaving nothing behind.</p>
-      <p>Manifest matches each arrival to the receiving wallet and watches whether the balance survives the window. <strong>Round trips are found and removed.</strong></p>
+      <p>Tare matches each arrival to the receiving wallet and watches whether the balance survives the window. <strong>Round trips are found and removed.</strong></p>
       <p>That makes our headline consistently lower. It is also the only version of the number you can trade against.</p>
     </div>
     <div class="card pad rv">
@@ -470,7 +465,7 @@ footer{padding:clamp(42px,5.5vw,68px) 0 44px;border-top:1px solid var(--line)}
       <div class="lr"><span>Arrived from Arbitrum</span><span>$8,400,000</span></div>
       <div class="lr out"><span>Returned to Ethereum</span><span>−$39,900,000</span></div>
       <div class="lr"><span>Reported as volume elsewhere</span><span>$89,500,000</span></div>
-      <div class="lr tot"><span>Counted by Manifest</span><span>$9,700,000</span></div>
+      <div class="lr tot"><span>Counted by Tare</span><span>$9,700,000</span></div>
     </div>
   </div>
 </section>
@@ -487,7 +482,7 @@ footer{padding:clamp(42px,5.5vw,68px) 0 44px;border-top:1px solid var(--line)}
         <div class="rule" data-k="fresh"><span class="sw"></span><span class="rt">A <b>first-seen wallet</b> funded above $1M</span></div>
       </div>
       <div class="tg">
-        <div class="hd"><span class="av"></span><span class="nm">Manifest alerts</span><span class="tme">14:22 UTC</span></div>
+        <div class="hd"><span class="av"></span><span class="nm">Tare alerts</span><span class="tme">14:22 UTC</span></div>
         <div class="msg" id="tgMsg"></div>
       </div>
     </div>
@@ -496,8 +491,8 @@ footer{padding:clamp(42px,5.5vw,68px) 0 44px;border-top:1px solid var(--line)}
       <div class="hint">One image, generated at 00:00 UTC</div>
       <div class="sharecard">
         <div class="sh-top">
-          <svg width="18" height="18" viewBox="0 0 26 26" fill="none" aria-hidden="true"><rect width="26" height="26" rx="8" fill="#7C5CFF"/><circle cx="17.2" cy="13" r="3.1" fill="#0C0718"/><path d="M5.6 8.4A6.6 6.6 0 0 1 5.6 17.6" stroke="#0C0718" stroke-width="1.6" stroke-linecap="round"/></svg>
-          <b>Manifest</b><span>04 Aug 2026</span>
+          <svg width="21" height="21" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M11.4 4.2a11.8 11.8 0 0 1 0 23.6" stroke="#7C5CFF" stroke-width="1.9" stroke-linecap="round"/><path d="M11.4 8.8a7.2 7.2 0 0 1 0 14.4" stroke="#7C5CFF" stroke-width="2.6" stroke-linecap="round"/><circle cx="11.4" cy="16" r="3.5" fill="#7C5CFF"/></svg>
+          <b>Tare</b><span>04 Aug 2026</span>
         </div>
         <div class="sh-big num">$268.4M</div>
         <div class="sh-lb">arrived on Solana today and is still here</div>
@@ -546,12 +541,12 @@ footer{padding:clamp(42px,5.5vw,68px) 0 44px;border-top:1px solid var(--line)}
   <div class="tiers">
     <div class="card tier rv">
       <span class="tn">Public</span><div class="pr">$0</div>
-      <ul><li>Daily held figure and origin table</li><li>Manifest delayed 15 minutes</li><li>Entries over $1M only</li><li>Daily card</li></ul>
-      <a class="btn btn-ghost" href="#top">Open the manifest</a>
+      <ul><li>Daily held figure and origin table</li><li>Arrivals feed, delayed 15 minutes</li><li>Entries over $1M only</li><li>Daily card</li></ul>
+      <a class="btn btn-ghost" href="#top">Open the arrivals feed</a>
     </div>
     <div class="card tier hot rv">
       <span class="tn">Desk</span><div class="pr">$79 <small>/ month</small></div>
-      <ul><li>Live manifest from $100K, no delay</li><li>Full trace on every entry</li><li>Dwell and first-use tracing</li><li>Alert rules, Telegram under 10 seconds</li></ul>
+      <ul><li>Live arrivals from $100K, no delay</li><li>Full trace on every entry</li><li>Dwell and first-use tracing</li><li>Alert rules, Telegram under 10 seconds</li></ul>
       <a class="btn btn-primary" href="#top">Start</a>
     </div>
     <div class="card tier rv">
@@ -565,10 +560,10 @@ footer{padding:clamp(42px,5.5vw,68px) 0 44px;border-top:1px solid var(--line)}
 <footer>
   <div class="card note rv">
     <span class="eyebrow">House rule</span>
-    <p>Manifest reports measured flow. It does not name who moved the money. Wallets are described by what can be verified — first seen or returning, funded from where, holding what — never by a firm's name inferred from a pattern.</p>
+    <p>Tare reports measured flow. It does not name who moved the money. Wallets are described by what can be verified — first seen or returning, funded from where, holding what — never by a firm's name inferred from a pattern.</p>
   </div>
   <div class="fbot">
-    <span>Manifest · Capital arriving on Solana</span>
+    <span>Tare · Capital arriving on Solana</span>
     <span class="flinks"><a href="#method">Method</a><a href="#top">Coverage</a><a href="#top">Status</a><a href="#top">Changelog</a><a href="#top">Contact</a></span>
   </div>
 </footer>
@@ -687,7 +682,7 @@ footer{padding:clamp(42px,5.5vw,68px) 0 44px;border-top:1px solid var(--line)}
     }));
   });
 
-  /* ---------- manifest feed ---------- */
+  /* ---------- arrivals feed ---------- */
   const sources = [
     ['Ethereum','Wormhole'],['Ethereum','deBridge'],['Base','Mayan'],['Base','Across'],
     ['Arbitrum','deBridge'],['BNB Chain','Wormhole'],['Hyperliquid','withdrawal'],
@@ -808,8 +803,8 @@ footer{padding:clamp(42px,5.5vw,68px) 0 44px;border-top:1px solid var(--line)}
     x.fillStyle='#0C0718'; x.fillRect(0,0,1200,675);
     x.fillStyle='#171029'; x.fillRect(64,64,1072,547);
     x.strokeStyle='rgba(241,237,255,.12)'; x.lineWidth=2; x.strokeRect(64,64,1072,547);
-    x.fillStyle='#7C5CFF'; x.beginPath(); x.roundRect(112,120,34,34,10); x.fill();
-    x.fillStyle='#F1EDFF'; x.font='600 26px Sora, sans-serif'; x.fillText('Manifest',162,146);
+    var s=38/32,mx=112+11.4*s,my=118+16*s;x.strokeStyle='#7C5CFF'; x.lineCap='round';x.lineWidth=1.9*s; x.beginPath(); x.arc(mx,my,11.8*s,-Math.PI/2,Math.PI/2); x.stroke();x.lineWidth=2.6*s; x.beginPath(); x.arc(mx,my,7.2*s,-Math.PI/2,Math.PI/2); x.stroke();x.fillStyle='#7C5CFF'; x.beginPath(); x.arc(mx,my,3.5*s,0,7); x.fill();
+    x.fillStyle='#F1EDFF'; x.font='600 26px Sora, sans-serif'; x.fillText('Tare',152,146);
     x.fillStyle='#6B6390'; x.font='400 20px "JetBrains Mono", monospace'; x.fillText('04 Aug 2026',962,146);
     x.fillStyle='#34D399'; x.font='600 104px "JetBrains Mono", monospace'; x.fillText('$268.4M',112,320);
     x.fillStyle='#948BB4'; x.font='400 28px "Plus Jakarta Sans", sans-serif';
@@ -822,7 +817,7 @@ footer{padding:clamp(42px,5.5vw,68px) 0 44px;border-top:1px solid var(--line)}
       x.fillStyle='#F1EDFF'; x.font='600 40px "JetBrains Mono", monospace'; x.fillText(v,px,500);
       x.fillStyle='#6B6390'; x.font='400 22px "Plus Jakarta Sans", sans-serif'; x.fillText(k,px,536);
     });
-    const a=document.createElement('a'); a.download='manifest-2026-08-04.png'; a.href=c.toDataURL('image/png'); a.click();
+    const a=document.createElement('a'); a.download='tare-2026-08-04.png'; a.href=c.toDataURL('image/png'); a.click();
   });
 })();
 </script>

@@ -58,7 +58,7 @@ These are decided. Do not re-litigate them mid-build.
 | Cache / match buffer | **Redis** | Pending-arrival buffer keyed by bridge message ID, plus pub/sub to the websocket layer. |
 | Solana ingest | **Helius gRPC / Geyser** (or webhooks) | The product promises event-to-alert under 10 seconds. RPC polling cannot hit that. Do not build on polling and plan to swap later. |
 | EVM ingest | Provider RPC log subscriptions | Origin-side deposit events per bridge. |
-| Client transport | Websocket | Live manifest feed. |
+| Client transport | Websocket | Live arrivals feed. |
 | Wallet connect | **None, ever** | This is a public data product. No connect button, no signature, no custody surface, no reason to hold a private key anywhere in the system. |
 | Hosting | Frontend on Vercel, ingest workers on the VPS | Frontend can go live in simulated mode on day one. |
 
@@ -378,7 +378,7 @@ Paste this to start:
 > capital-inflow tracker. Set up the design tokens from §5 in `globals.css` and
 > build the full page structure from `prototype-v2.html`: nav with freshness
 > indicator, hero with range selector and three figures, 30-day gross-vs-held
-> chart, live manifest table with expandable row traces, dwell breakdown, first-use
+> chart, live arrivals table with expandable row traces, dwell breakdown, first-use
 > list, origin cards with sparklines, method section, alerts and daily card,
 > coverage and status, pricing, footer.
 >
@@ -416,9 +416,11 @@ Paste this to start:
   `manifest.json`, web app manifests and Kubernetes manifests. §8's entire plan is
   organic traffic, so a brand term nobody can rank for was disqualifying.
 
-  Note the one word deliberately kept: the live entry table is still called **the
-  manifest**. That is the shipping document, not the old brand, and it sits in the
-  same port vocabulary as tare.
+  The old name is gone from every surface, including the live entry table, which
+  is now **Arrivals**. That is the name §4 already gave the ClickHouse table, so
+  the interface and the schema call the same thing by the same word — the reason
+  `held` is used in both places too. Nothing in the repo says `manifest` any more;
+  if the word reappears, it is a leftover, not a decision.
 
 - **Logo — locked.** *Aperture*: two rings and a core, the hero portal reduced.
   Geometry and its constraints are documented in `src/components/Brand.tsx`, and

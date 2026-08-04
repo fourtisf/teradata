@@ -15,18 +15,18 @@ const TIERS: Tier[] = [
     price: "$0",
     features: [
       "Daily held figure and origin table",
-      "The manifest, delayed 15 minutes",
+      "Arrivals feed, delayed 15 minutes",
       "Entries over $1M only",
       "Daily card",
     ],
-    cta: "Open the manifest",
+    cta: "Open the arrivals feed",
   },
   {
     name: "Desk",
     price: "$79",
     period: "/ month",
     features: [
-      "Live manifest from $100K, no delay",
+      "Live arrivals from $100K, no delay",
       "Full trace on every entry",
       "Dwell and first-use tracing",
       "Alert rules, Telegram under 10 seconds",

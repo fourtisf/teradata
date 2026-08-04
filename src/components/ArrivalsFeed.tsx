@@ -16,7 +16,7 @@ const FILTERS: ReadonlyArray<{ key: "all" | ArrivalKind; label: string }> = [
   { key: "exchange", label: "Exchanges" },
 ];
 
-export function ManifestFeed({
+export function ArrivalsFeed({
   initialEntries,
   entryCount,
   medianLagMs,
