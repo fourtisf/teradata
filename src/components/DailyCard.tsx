@@ -1,9 +1,44 @@
 "use client";
 
 import { useRef } from "react";
-import { BrandMark } from "@/components/Brand";
+import { BrandMark, MARK } from "@/components/Brand";
 import { isoDate, longDate, money, percent } from "@/lib/format";
 import type { FlowSummary } from "@/lib/data/types";
+
+/**
+ * The mark, drawn from the same geometry the SVG uses. Redrawing it by hand here
+ * is how a logo quietly drifts between surfaces — the card is the asset people
+ * post, so it has to be the identical shape.
+ */
+function drawMark(
+  ctx: CanvasRenderingContext2D,
+  color: string,
+  x: number,
+  y: number,
+  size: number,
+) {
+  const s = size / MARK.grid;
+  const cx = x + MARK.cx * s;
+  const cy = y + MARK.cy * s;
+
+  ctx.strokeStyle = color;
+  ctx.lineCap = "round";
+
+  ctx.lineWidth = MARK.outerWidth * s;
+  ctx.beginPath();
+  ctx.arc(cx, cy, MARK.outerRadius * s, -Math.PI / 2, Math.PI / 2);
+  ctx.stroke();
+
+  ctx.lineWidth = MARK.innerWidth * s;
+  ctx.beginPath();
+  ctx.arc(cx, cy, MARK.innerRadius * s, -Math.PI / 2, Math.PI / 2);
+  ctx.stroke();
+
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(cx, cy, MARK.coreRadius * s, 0, Math.PI * 2);
+  ctx.fill();
+}
 
 /**
  * The daily card. P5 generates this server-side at 00:00 UTC and serves it as
@@ -44,15 +79,12 @@ export function DailyCard({ summary, date }: { summary: FlowSummary; date: strin
     ctx.lineWidth = 2;
     ctx.strokeRect(64, 64, 1072, 547);
 
-    ctx.fillStyle = token("--violet");
-    ctx.beginPath();
-    if (typeof ctx.roundRect === "function") ctx.roundRect(112, 120, 34, 34, 10);
-    else ctx.rect(112, 120, 34, 34);
-    ctx.fill();
+    drawMark(ctx, token("--violet"), 112, 118, 38);
 
     ctx.fillStyle = token("--txt");
     ctx.font = `600 26px ${display}`;
-    ctx.fillText("Manifest", 162, 146);
+    // Clear space to the left of the wordmark ≈ the core's diameter.
+    ctx.fillText("Manifest", 152, 146);
 
     ctx.fillStyle = token("--txt-3");
     ctx.font = `400 20px ${mono}`;
@@ -102,7 +134,7 @@ export function DailyCard({ summary, date }: { summary: FlowSummary; date: strin
 
       <div className="sharecard">
         <div className="sh-top">
-          <BrandMark size={18} />
+          <BrandMark size={21} />
           <b ref={displayRef}>Manifest</b>
           <span className="num">{longDate(date)}</span>
         </div>
