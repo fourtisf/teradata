@@ -5,7 +5,7 @@ export function Nav() {
   return (
     <nav>
       <div className="nav-in">
-        <a className="brand" href="#top">
+        <a className="brand" href="/" aria-label="Tare home">
           <BrandMark />
           <b>Tare</b>
         </a>
@@ -14,7 +14,7 @@ export function Nav() {
           <Freshness prefix="updated " />
         </span>
         {/* No wallet connect. This is a public data product — §2. */}
-        <a className="btn btn-primary" href="#access">
+        <a className="btn btn-primary" href="#waitlist">
           Watch the port
         </a>
       </div>

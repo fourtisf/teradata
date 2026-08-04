@@ -422,6 +422,13 @@ Paste this to start:
   `held` is used in both places too. Nothing in the repo says `manifest` any more;
   if the word reappears, it is a leftover, not a decision.
 
+- **Indexing stays off until the data is real — locked.** `robots.ts` disallows
+  every crawler and the sitemap is empty while `DATA_SOURCE=sim`. §8 is the whole
+  growth strategy, so this is not a decision taken lightly, but ranking for
+  invented dollar amounts on canonical URLs spends §1's credibility permanently
+  and cannot be undone by fixing the data afterwards. `DATA_SOURCE=live` turns
+  both on with no other change.
+
 - **Logo — locked.** *Aperture*: two rings and a core, the hero portal reduced.
   Geometry and its constraints are documented in `src/components/Brand.tsx`, and
   the daily-card canvas draws from the same exported `MARK` constants so the shape

@@ -1060,6 +1060,10 @@ section {
 }
 
 .track {
+  /* Both of these are load-bearing. The track and the fill are spans, and an
+     inline box ignores width and height — the bars rendered at zero pixels
+     everywhere until this was set, on dwell, first use and the breakdowns. */
+  display: block;
   height: 8px;
   border-radius: 4px;
   background: var(--wash-3);
@@ -1067,6 +1071,7 @@ section {
 }
 
 .fill {
+  display: block;
   height: 100%;
   width: 0;
   border-radius: 4px;
@@ -1880,4 +1885,393 @@ footer {
   border-radius: 5px;
   padding: 3px 7px;
   flex: none;
+}
+
+/* ------------------------------------------------------- public pages ----- */
+
+/* The §8 pages show a fixed set of entries, so the feed's clipped window and
+   its fade do not apply. */
+.rows.full {
+  max-height: none;
+  overflow: visible;
+}
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--txt-3);
+  padding-top: clamp(26px, 4vw, 40px);
+}
+
+.crumbs a:hover {
+  color: var(--txt-2);
+}
+
+.pg-head {
+  padding: clamp(18px, 2.6vw, 26px) 0 clamp(26px, 3.4vw, 38px);
+}
+
+.pg-head h1 {
+  max-width: 22ch;
+  font-size: clamp(28px, 4vw, 44px);
+}
+
+.pg-figs {
+  margin-top: clamp(22px, 3vw, 30px);
+}
+
+.pg-prose {
+  margin-top: clamp(22px, 3vw, 30px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 68ch;
+}
+
+.pg-prose p {
+  color: var(--txt-2);
+  font-size: 15px;
+}
+
+.pg-nav {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
+/* Links to sibling pages. This is the internal-link graph §8 depends on —
+   a crawler that lands on one day should be able to walk the whole set. */
+.pg-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.pg-link {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 11px;
+  color: var(--txt-2);
+  transition:
+    border-color 0.22s ease,
+    color 0.22s ease;
+}
+
+.pg-link:hover {
+  border-color: var(--txt-3);
+  color: var(--txt);
+}
+
+.pg-link[aria-current="page"] {
+  border-color: var(--violet);
+  color: var(--violet-lt);
+}
+
+.brk {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.brk-row {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr 108px;
+  gap: 18px;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.brk-row:last-child {
+  border-bottom: 0;
+}
+
+.brk-row .nm {
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.brk-row .val {
+  font-family: var(--mono);
+  font-size: 13.5px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+  .brk-row {
+    grid-template-columns: 1fr 96px;
+    row-gap: 10px;
+  }
+  .brk-row .track {
+    grid-column: 1 / 3;
+  }
+}
+
+/* Sub-lines carrying Route and Dwell once their columns are dropped. */
+.row .sub {
+  display: none;
+  font-style: normal;
+  font-family: var(--body);
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--txt-3);
+  margin-top: 3px;
+}
+
+@media (max-width: 920px) {
+  .row .org .sub,
+  .row .amt .sub {
+    display: block;
+  }
+}
+
+/* "Time · UTC" needs a little more room than "Time" did. Every timestamp on
+   every surface is UTC and the header now says so. */
+@media (min-width: 921px) {
+  .rhead,
+  .row {
+    grid-template-columns: 76px 1.05fr 0.9fr 0.88fr 0.8fr 0.52fr 112px 22px;
+  }
+}
+
+.pg-foot {
+  margin-top: 14px;
+  font-size: 11.5px;
+  color: var(--txt-3);
+}
+
+/* ------------------------------------------------------------ waitlist ---- */
+
+.wl h4 {
+  font-family: var(--display);
+  font-size: 15.5px;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.wl .hint {
+  font-size: 13px;
+  color: var(--txt-3);
+  margin-bottom: 18px;
+}
+
+.wl-form {
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.wl-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.wl-input {
+  flex: 1 1 220px;
+  min-width: 0;
+  font-family: var(--body);
+  font-size: 13.5px;
+  color: var(--txt);
+  background: var(--bg);
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  padding: 10px 14px;
+  transition: border-color 0.22s ease;
+}
+
+.wl-input::placeholder {
+  color: var(--txt-3);
+}
+
+.wl-input:hover {
+  border-color: var(--txt-3);
+}
+
+.wl-form .btn {
+  flex: none;
+}
+
+.wl-form .btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.wl-done {
+  font-size: 13.5px;
+  color: var(--green);
+}
+
+/* The one place rose is allowed to mean something other than capital leaving:
+   a form error is the only other failure state a reader must not miss. */
+.wl-error {
+  font-size: 12.5px;
+  color: var(--rose);
+  margin-top: 10px;
+}
+
+.wl-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+  font-size: 12.5px;
+  color: var(--txt-3);
+}
+
+.wl-links a {
+  color: var(--txt-2);
+  border-bottom: 1px solid var(--line-2);
+}
+
+.wl-links a:hover {
+  color: var(--txt);
+}
+
+/* ----------------------------------------------------------------- faq ---- */
+
+.faq {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.faq-item {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+}
+
+.faq summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 17px 19px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  list-style: none;
+  transition: color 0.22s ease;
+}
+
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq summary:hover {
+  color: var(--violet-lt);
+}
+
+.faq-mark {
+  margin-left: auto;
+  font-family: var(--mono);
+  color: var(--txt-3);
+  flex: none;
+  transition: transform 0.25s ease;
+}
+
+.faq details[open] .faq-mark {
+  transform: rotate(45deg);
+  color: var(--violet-lt);
+}
+
+.faq-a {
+  padding: 0 19px 18px;
+  font-size: 13.5px;
+  color: var(--txt-2);
+  max-width: 62ch;
+}
+
+.faq-a code {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--txt);
+  background: var(--wash-2);
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+
+/* ----------------------------------------------------------- changelog ---- */
+
+.log {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.log-row {
+  display: grid;
+  grid-template-columns: 104px 92px 1fr;
+  gap: 18px;
+  align-items: baseline;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.log-row:last-child {
+  border-bottom: 0;
+}
+
+.log-date {
+  font-size: 12px;
+  color: var(--txt-3);
+}
+
+.log-kind {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border: 1px solid var(--line-2);
+  border-radius: 5px;
+  padding: 3px 7px;
+  color: var(--txt-3);
+  justify-self: start;
+}
+
+/* A method change can move a published number; a release cannot. The reader
+   needs that difference at a glance, so only method and correction take the
+   accent. */
+.log-method,
+.log-correction {
+  color: var(--violet-lt);
+  border-color: var(--violet);
+}
+
+.log-body b {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.log-body em {
+  display: block;
+  font-style: normal;
+  font-size: 13px;
+  color: var(--txt-2);
+  margin-top: 4px;
+  max-width: 68ch;
+}
+
+@media (max-width: 640px) {
+  .log-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
 }

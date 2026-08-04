@@ -6,17 +6,33 @@ Capital arriving on Solana, and whether it stayed. Live at **taredata.com**.
 before changing anything. `prototype-v2.html` is the design prototype and the
 visual source of truth. This README covers only what P0 actually is.
 
-## Status: P0 complete
+## Status
 
-Next.js App Router scaffold, the design tokens from §5, and the full page from
-the prototype, rendering against a simulated data provider. Nothing is measured
-yet — every figure on the page is generated.
+Nothing is measured yet. **Every figure on this site is generated**, the status
+strip reads `Simulated`, a preview banner says so on every page, and
+`robots.txt` disallows everything until `DATA_SOURCE=live`.
 
 | Phase | State |
 |---|---|
 | P0 — skeleton, simulated data | done |
 | P1 — Solana ingest | not started, see *What P1 needs* below |
-| P2–P6 | not started |
+| P2–P3 — correlation, re-export | not started |
+| P4 — product surface | done ahead of schedule (range, chart, traces, coverage, status) |
+| P5 — retention | daily card done as the OG generator; alerts not started |
+| P6 — public pages | pages, sitemap, JSON-LD and OG done; REST/WS API not started |
+
+### Routes
+
+```
+/                       the live surface, rendered per request
+/day/[date]             §8, ISR 1h, last 30 days, 404 outside the window
+/origin/[chain]         §8, ISR 1h, one per origin chain or venue
+/route/[bridge]         §8, ISR 1h, one per bridge
+/status                 indexer state, unattributed share, changelog
+/api/waitlist           POST { email }, forwards to WAITLIST_WEBHOOK_URL
+/opengraph-image        the daily card, and one per public page
+/sitemap.xml /robots.txt
+```
 
 ## Running it
 
@@ -82,17 +98,34 @@ capital that left. Fonts are loaded through `next/font` and exposed as
 `--font-display`, `--font-body`, `--font-mono`, so components never name a font
 either.
 
+## The public pages
+
+§8 is the growth strategy, so the machinery is real even though the figures are
+not: server-rendered with ISR, canonical URLs, `Dataset` JSON-LD, a generated OG
+card per page, and prose written from the same numbers the page displays. Every
+sentence in `src/lib/prose.ts` restates a figure that is rendered next to it.
+
+**Indexing is off while the data is simulated.** `robots.ts` disallows everything
+and the sitemap is empty in `sim` mode. Ranking for invented dollar amounts would
+spend the credibility the whole product rests on, and it is not recoverable by
+fixing the data afterwards. Setting `DATA_SOURCE=live` turns both on with no
+other change.
+
 ## What is verified
 
-Checked against a real browser at 1440px and 360px:
+Checked against a real browser at 1440px, 920px and 360px:
 
-- No horizontal overflow at 360px.
+- No horizontal overflow at 360px on any route.
 - Visible keyboard focus on the range selector, route tabs, expandable rows and
   alert toggles; rows open with Enter and carry `aria-expanded`.
 - `prefers-reduced-motion` stops the live feed and the animations, and content
   that would otherwise reveal on scroll renders visible.
 - Range selector, route filter, quiet-hours preview, trace expansion, feed pause
   while a trace is open, live arrivals and live reclassification all work.
+- All 43 pages prerender; OG routes return valid 1200×630 PNGs; unknown slugs and
+  out-of-window dates 404.
+- The 30-day series sums exactly to the 30-day headline, and its last day equals
+  the 24-hour headline, so the chart, the hero and `/day/<today>` agree.
 - No console errors, no failed requests.
 
 ## Constraints that are not negotiable

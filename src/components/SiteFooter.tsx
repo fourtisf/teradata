@@ -1,4 +1,5 @@
 import { ContractAddress } from "@/components/ContractAddress";
+import { SOCIAL, SOCIAL_LINKS } from "@/lib/config/site";
 import { Reveal } from "@/components/Reveal";
 
 export function SiteFooter() {
@@ -18,11 +19,18 @@ export function SiteFooter() {
         <span>Tare · Capital arriving on Solana</span>
         <ContractAddress />
         <span className="flinks">
-          <a href="#method">Method</a>
-          <a href="#coverage">Coverage</a>
-          <a href="#coverage">Status</a>
-          <a href="#top">Changelog</a>
-          <a href="#top">Contact</a>
+          <a href="/#method">Method</a>
+          <a href="/#faq">FAQ</a>
+          <a href="/status">Status</a>
+          <a href="/status#changelog">Changelog</a>
+          {/* Only rendered when configured — a dead social link costs more
+              than a missing one on a product selling transparency. */}
+          {SOCIAL_LINKS.map((link) => (
+            <a key={link.label} href={link.href} rel="me noreferrer" target="_blank">
+              {link.label}
+            </a>
+          ))}
+          {SOCIAL.email ? <a href={`mailto:${SOCIAL.email}`}>Contact</a> : null}
         </span>
       </div>
     </footer>

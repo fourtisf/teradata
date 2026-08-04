@@ -38,9 +38,18 @@ export function EntryRow({
         onClick={onToggle}
       >
         <span className="tm">{utcTime(entry.solanaTs)}</span>
-        <span className="org">{entry.origin}</span>
+        <span className="org">
+          {entry.origin}
+          {/* Route and dwell columns are dropped below 920px. Folding them
+              under Origin and Amount keeps the information on the row instead
+              of hiding it behind a tap on the trace. */}
+          <em className="sub">{entry.route}</em>
+        </span>
         <span className="c-rt">{entry.route}</span>
-        <span className="amt">{money(entry.amountUsd)}</span>
+        <span className="amt">
+          {money(entry.amountUsd)}
+          <em className="sub">{dwell(entry.dwellMs)} dwell</em>
+        </span>
         <span className="c-to">
           {/* Never a firm name. Only what is verifiable about the wallet. */}
           <span className={entry.recipient.firstSeen ? "tagx first" : "tagx"}>

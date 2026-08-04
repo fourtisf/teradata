@@ -148,7 +148,7 @@ export function ArrivalsFeed({
       </div>
 
       <div className="rhead">
-        <span className="c-tm">Time</span>
+        <span className="c-tm">Time · UTC</span>
         <span>Origin</span>
         <span className="c-rt">Route</span>
         <span>Amount</span>

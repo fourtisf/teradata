@@ -23,7 +23,7 @@ export function Hero({
           here.
         </p>
         <div className="hero-cta">
-          <a className="btn btn-primary" href="#access">
+          <a className="btn btn-primary" href="#waitlist">
             Start watching
           </a>
           <a className="btn btn-ghost" href="#method">

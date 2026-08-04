@@ -6,6 +6,8 @@ interface Tier {
   period?: string;
   features: string[];
   cta: string;
+  /** Where the button goes. Every tier had `#top` before, which is nowhere. */
+  href: string;
   primary?: boolean;
 }
 
@@ -20,6 +22,7 @@ const TIERS: Tier[] = [
       "Daily card",
     ],
     cta: "Open the arrivals feed",
+    href: "/#arrivals",
   },
   {
     name: "Desk",
@@ -31,7 +34,8 @@ const TIERS: Tier[] = [
       "Dwell and first-use tracing",
       "Alert rules, Telegram under 10 seconds",
     ],
-    cta: "Start",
+    cta: "Join the waitlist",
+    href: "#waitlist",
     primary: true,
   },
   {
@@ -44,7 +48,8 @@ const TIERS: Tier[] = [
       "Full history since indexing began",
       "Re-export flags included",
     ],
-    cta: "Request keys",
+    cta: "Request API keys",
+    href: "#waitlist",
   },
 ];
 
@@ -70,7 +75,7 @@ export function Pricing() {
               ))}
             </ul>
             {/* Links, not wallet connections. There is no custody surface here. */}
-            <a className={tier.primary ? "btn btn-primary" : "btn btn-ghost"} href="#top">
+            <a className={tier.primary ? "btn btn-primary" : "btn btn-ghost"} href={tier.href}>
               {tier.cta}
             </a>
           </Reveal>

@@ -1,5 +1,6 @@
 import { AlertsSection } from "@/components/AlertsSection";
 import { CoverageSection } from "@/components/CoverageSection";
+import { Faq } from "@/components/Faq";
 import { DwellSection } from "@/components/DwellSection";
 import { FirstUseSection } from "@/components/FirstUseSection";
 import { FlowChart } from "@/components/FlowChart";
@@ -11,6 +12,7 @@ import { OriginsSection } from "@/components/OriginsSection";
 import { Pricing } from "@/components/Pricing";
 import { Reveal } from "@/components/Reveal";
 import { SimNotice } from "@/components/SimNotice";
+import { Waitlist } from "@/components/Waitlist";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getDataProvider } from "@/lib/data";
 
@@ -49,7 +51,7 @@ export default async function HomePage() {
           <FlowChart series={snapshot.daily} />
         </section>
 
-        <section>
+        <section id="arrivals">
           <Reveal className="s-head">
             <span className="eyebrow">Arrivals</span>
             <h2>Every entry over $100K, as it lands</h2>
@@ -74,11 +76,26 @@ export default async function HomePage() {
         <OriginsSection origins={snapshot.origins} />
         <MethodSection />
         <AlertsSection summary={today} date={snapshot.status.updatedAt} />
+        <Faq />
         <CoverageSection
           coverage={snapshot.coverage}
           status={snapshot.status}
           source={provider.source}
         />
+        <section id="waitlist">
+          <Reveal className="s-head">
+            <span className="eyebrow">Stay on it</span>
+            <h2>Nothing here is measured yet</h2>
+            <p>
+              The indexer lands in P1. Leave an address and you get one email when the figures on
+              this page stop being simulated — that is the only thing worth being told about.
+            </p>
+          </Reveal>
+          <Reveal className="card pad">
+            <Waitlist />
+          </Reveal>
+        </section>
+
         <Pricing />
         <SiteFooter />
       </div>

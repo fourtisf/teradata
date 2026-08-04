@@ -8,6 +8,12 @@ import type { NextConfig } from "next";
  */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // The OG card reads its subsetted faces off disk. Next's tracer cannot see
+  // through the dynamic filename, so the directory is pinned explicitly or the
+  // image route 500s on a serverless deploy while working fine locally.
+  outputFileTracingIncludes: {
+    "/**": ["./src/lib/fonts/**"],
+  },
 };
 
 export default nextConfig;

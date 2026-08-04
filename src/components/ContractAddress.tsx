@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CONTRACT_ADDRESS } from "@/lib/config/site";
 
 /**
  * The token contract address.
@@ -13,7 +14,7 @@ import { useState } from "react";
  * Deliberately neutral. Violet, green and rose each mean exactly one thing on
  * this site (§5) and none of them mean "token", so this carries no colour.
  */
-export function ContractAddress({ address }: { address?: string | null }) {
+export function ContractAddress({ address = CONTRACT_ADDRESS }: { address?: string | null }) {
   const [copied, setCopied] = useState(false);
 
   const copy = () => {

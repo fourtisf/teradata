@@ -179,6 +179,68 @@ export interface HomeSnapshot {
   status: IndexerStatus;
 }
 
+/* ---------------------------------------------------------------------------
+ * §8 — the public pages. /origin/[chain], /route/[bridge], /day/[date].
+ *
+ * These are the organic-traffic surface and the reason the framework choice is
+ * fixed: they are server-rendered with ISR, carry canonical URLs, JSON-LD and
+ * OG images, and their prose is generated from the same figures the page shows.
+ * ------------------------------------------------------------------------- */
+
+/** One breakdown row on a public page — a route on an origin page, or vice versa. */
+export interface BreakdownRow {
+  name: string;
+  slug: string;
+  usd: number;
+  /** 0–1 of the page's total. */
+  share: number;
+}
+
+/** Shared shape: every public page is a headline, a chart, a table and prose. */
+export interface PublicPageBase {
+  /** Canonical path, e.g. `/day/2026-08-04`. */
+  path: string;
+  title: string;
+  /** Sentences generated from the figures below — never hand-written claims. */
+  prose: string[];
+  summary: FlowSummary;
+  daily: DailySeries;
+  topEntries: Entry[];
+  breakdown: BreakdownRow[];
+  /** ISO 8601 of the underlying data, for JSON-LD and the freshness line. */
+  updatedAt: string;
+}
+
+export interface DayPage extends PublicPageBase {
+  /** `YYYY-MM-DD`, UTC. */
+  date: string;
+  dwell: DwellBreakdown;
+  firstUse: FirstUseRow[];
+  previousDate: string | null;
+  nextDate: string | null;
+}
+
+export interface OriginPage extends PublicPageBase {
+  origin: string;
+  slug: string;
+  kind: ArrivalKind;
+  /** How this origin is identified — protocol message id, or hot-wallet labels. */
+  attribution: string;
+}
+
+export interface RoutePage extends PublicPageBase {
+  route: string;
+  slug: string;
+  /** §3.1 — the field the origin deposit and the Solana settlement join on. */
+  identifier: string;
+}
+
+/** Slug plus display name, for sitemaps and index links. */
+export interface PageRef {
+  slug: string;
+  name: string;
+}
+
 export interface EntryQuery {
   minUsd?: number;
   kind?: ArrivalKind;
@@ -199,6 +261,14 @@ export interface DataProvider {
   getCoverage(): Promise<Coverage>;
   getStatus(): Promise<IndexerStatus>;
   getHomeSnapshot(): Promise<HomeSnapshot>;
+
+  /** §8 public pages. Each returns null for an unknown slug rather than inventing one. */
+  getDayPage(date: string): Promise<DayPage | null>;
+  getOriginPage(slug: string): Promise<OriginPage | null>;
+  getRoutePage(slug: string): Promise<RoutePage | null>;
+  listDays(limit: number): Promise<string[]>;
+  listOrigins(): Promise<PageRef[]>;
+  listRoutes(): Promise<PageRef[]>;
 }
 
 /**

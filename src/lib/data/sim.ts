@@ -19,9 +19,11 @@ import {
 } from "@/lib/config/programs";
 import { createRng, hashSeed, type Rng } from "@/lib/rng";
 import type {
+  BreakdownRow,
   Coverage,
   DailySeries,
   DataProvider,
+  DayPage,
   DwellBreakdown,
   Entry,
   EntryQuery,
@@ -32,9 +34,14 @@ import type {
   HomeSnapshot,
   IndexerStatus,
   OriginCard,
+  OriginPage,
+  PageRef,
   Range,
+  RoutePage,
 } from "@/lib/data/types";
 import { RANGES } from "@/lib/data/types";
+import { dayProse, originProse, routeProse } from "@/lib/prose";
+import { dayStartMs, isIsoDate, shiftDay, toSlug } from "@/lib/slug";
 
 /** The prototype's headline figures, kept verbatim: gross / held / unspent. */
 const RANGE_FIGURES: Record<Range, [number, number, number]> = {
@@ -54,6 +61,15 @@ const RANGE_ENTRY_COUNT: Record<Range, number> = {
 const BASE_SLOT = 341_209_884;
 const MEDIAN_LAG_MS = 8_200;
 
+/** How far back the sim pretends to have history. Beyond this, pages 404. */
+const DAY_WINDOW = 30;
+
+/** 29.6 / 268.4 — unspent as a share of what stayed, held steady across pages. */
+const UNSPENT_OF_HELD = 29.6 / 268.4;
+
+/** Roughly how much of total inbound comes over bridges rather than venues. */
+const BRIDGE_SHARE_OF_TOTAL = 0.55;
+
 /** Origin, net USD in millions, percent against the seven-day average. */
 const ORIGINS: ReadonlyArray<readonly [string, number, number]> = [
   ["Ethereum", 71.4, 18.2],
@@ -65,6 +81,8 @@ const ORIGINS: ReadonlyArray<readonly [string, number, number]> = [
   ["OKX", 14.1, -2.2],
   ["BNB Chain", 11.8, 7.4],
 ];
+
+const ORIGIN_TOTAL_M = ORIGINS.reduce((sum, [, millions]) => sum + millions, 0);
 
 const DWELL_BUCKETS: ReadonlyArray<readonly [string, number, number, boolean]> = [
   // label, USD at 24h, bar share, is-idle
@@ -190,6 +208,33 @@ export class SimProvider implements DataProvider {
       });
     }
 
+    // Reconcile the series with the headline figures.
+    //
+    // Without this the chart and the hero disagree: the bars summed to roughly
+    // $14B while the 30d figure read $9.84B, and the origin pages — which are
+    // slices of this series — inherited the error and inflated with it. The
+    // last day is pinned to the 24h figures for the same reason: the home page
+    // and /day/<today> must not report different numbers for the same day.
+    if (days === DAY_WINDOW) {
+      const last = series[series.length - 1];
+      if (last) {
+        const [gross24, held24] = RANGE_FIGURES["24h"];
+        const [gross30, held30] = RANGE_FIGURES["30d"];
+        const others = series.slice(0, -1);
+        const grossOthers = others.reduce((sum, d) => sum + d.grossUsd, 0) || 1;
+        const heldOthers = others.reduce((sum, d) => sum + Math.max(0, d.heldUsd), 0) || 1;
+        const grossFactor = (gross30 - gross24) / grossOthers;
+        const heldFactor = (held30 - held24) / heldOthers;
+        for (const day of others) {
+          // Outflow days are a fraction of their own gross, so they follow it.
+          day.heldUsd = day.heldUsd < 0 ? day.heldUsd * grossFactor : day.heldUsd * heldFactor;
+          day.grossUsd *= grossFactor;
+        }
+        last.grossUsd = gross24;
+        last.heldUsd = held24;
+      }
+    }
+
     const averageHeldUsd =
       series.reduce((sum, d) => sum + Math.max(0, d.heldUsd), 0) / series.length;
 
@@ -305,6 +350,263 @@ export class SimProvider implements DataProvider {
 
     return { summaries, daily, entries, dwell, firstUse, origins, coverage, status };
   }
+
+  /* ----------------------------------------------------------------------
+   * §8 public pages.
+   *
+   * The sim only holds the last 30 days, so anything outside that window
+   * returns null and the route renders a 404. Inventing a page for an
+   * arbitrary date would put fabricated figures on a canonical URL that a
+   * crawler then keeps.
+   * -------------------------------------------------------------------- */
+
+  private todayIso(): string {
+    return new Date(this.now()).toISOString().slice(0, 10);
+  }
+
+  async listDays(limit = 30): Promise<string[]> {
+    const today = this.todayIso();
+    const span = Math.min(limit, DAY_WINDOW);
+    return Array.from({ length: span }, (_, i) => shiftDay(today, -i));
+  }
+
+  async listOrigins(): Promise<PageRef[]> {
+    return ORIGINS.map(([name]) => ({ slug: toSlug(name), name }));
+  }
+
+  async listRoutes(): Promise<PageRef[]> {
+    return BRIDGES.map((bridge) => ({ slug: toSlug(bridge.name), name: bridge.name }));
+  }
+
+  async getDayPage(date: string): Promise<DayPage | null> {
+    if (!isIsoDate(date)) return null;
+    const days = await this.listDays(DAY_WINDOW);
+    if (!days.includes(date)) return null;
+
+    const series = await this.getDailyFlows(DAY_WINDOW);
+    const row = series.days.find((d) => d.date.slice(0, 10) === date);
+    if (!row) return null;
+
+    // A net-outflow day held less than nothing. The headline figure floors at
+    // zero and the chart keeps the negative bar, because the day still happened.
+    const grossUsd = row.grossUsd;
+    const heldUsd = Math.max(0, row.heldUsd);
+    const summary: FlowSummary = {
+      range: "24h",
+      declaredInboundUsd: grossUsd,
+      stillOnSolanaUsd: heldUsd,
+      unspentUsd: heldUsd * UNSPENT_OF_HELD,
+      reexportedUsd: grossUsd - heldUsd,
+      entryCount: Math.round((grossUsd / RANGE_FIGURES["24h"][0]) * RANGE_ENTRY_COUNT["24h"]),
+      medianLagMs: MEDIAN_LAG_MS,
+    };
+
+    const rng = this.rngFor(`day:${date}`);
+    const topEntries = topBy(
+      Array.from({ length: 24 }, (_, i) =>
+        makeEntry(rng, dayStartMs(date) + (i * 3600e3) / 2, BASE_SLOT),
+      ),
+      8,
+    );
+    const breakdown = shareRows(
+      ORIGINS.map(([name, millions]) => ({ name, weight: millions })),
+      grossUsd,
+    );
+    const dwell = scaleDwell(grossUsd, heldUsd);
+
+    return {
+      path: `/day/${date}`,
+      date,
+      title: `Solana capital inflow on ${date}`,
+      summary,
+      daily: series,
+      topEntries,
+      breakdown,
+      dwell,
+      firstUse: scaleFirstUse(grossUsd),
+      prose: dayProse(date, summary, breakdown, topEntries, dwell),
+      previousDate: days.includes(shiftDay(date, -1)) ? shiftDay(date, -1) : null,
+      nextDate: days.includes(shiftDay(date, 1)) ? shiftDay(date, 1) : null,
+      updatedAt: new Date(this.now()).toISOString(),
+    };
+  }
+
+  async getOriginPage(slug: string): Promise<OriginPage | null> {
+    const found = ORIGINS.find(([name]) => toSlug(name) === toSlug(slug));
+    if (!found) return null;
+    const [origin, millions] = found;
+    const kind = VENUES.includes(origin) ? ("exchange" as const) : ("bridge" as const);
+
+    const share = millions / ORIGIN_TOTAL_M;
+    const { summary, daily } = await this.scaledWindow(`origin:${origin}`, share);
+    const rng = this.rngFor(`origin-entries:${origin}`);
+    const topEntries = topBy(
+      Array.from({ length: 40 }, (_, i) => makeEntry(rng, this.now() - i * 90e3, BASE_SLOT)).map(
+        (entry) => ({ ...entry, origin, kind, route: kind === "exchange" ? "withdrawal" : entry.route }),
+      ),
+      8,
+    );
+
+    // A chain page breaks down by the bridges that carried the value; a venue
+    // page has a single route by definition, so it breaks down by asset.
+    const breakdown =
+      kind === "bridge"
+        ? shareRows(
+            BRIDGES.map((b, i) => ({ name: b.name, weight: 5 - i * 0.7 })),
+            summary.declaredInboundUsd,
+          )
+        : shareRows(
+            ["USDC", "USDT", "SOL", "ETH"].map((name, i) => ({ name, weight: 4 - i })),
+            summary.declaredInboundUsd,
+          );
+
+    return {
+      path: `/origin/${toSlug(origin)}`,
+      origin,
+      slug: toSlug(origin),
+      kind,
+      attribution:
+        kind === "bridge"
+          ? "protocol-level message matching"
+          : "exchange hot-wallet attribution",
+      title: `Capital arriving on Solana from ${origin}`,
+      summary,
+      daily,
+      topEntries,
+      breakdown,
+      prose: originProse(origin, kind, summary, breakdown, topEntries, DAY_WINDOW),
+      updatedAt: new Date(this.now()).toISOString(),
+    };
+  }
+
+  async getRoutePage(slug: string): Promise<RoutePage | null> {
+    const bridge = BRIDGES.find((b) => toSlug(b.name) === toSlug(slug));
+    if (!bridge) return null;
+
+    const index = BRIDGES.indexOf(bridge);
+    const weight = 5 - index * 0.7;
+    const totalWeight = BRIDGES.reduce((sum, _, i) => sum + (5 - i * 0.7), 0);
+    // Bridges carry the chain half of the flow; venues carry the rest.
+    const share = (weight / totalWeight) * BRIDGE_SHARE_OF_TOTAL;
+    const { summary, daily } = await this.scaledWindow(`route:${bridge.name}`, share);
+
+    const rng = this.rngFor(`route-entries:${bridge.name}`);
+    const chains = ORIGINS.filter(([name]) => !VENUES.includes(name));
+    const topEntries = topBy(
+      Array.from({ length: 40 }, (_, i) => makeEntry(rng, this.now() - i * 90e3, BASE_SLOT)).map(
+        (entry) => ({
+          ...entry,
+          kind: "bridge" as const,
+          route: bridge.name,
+          confidence: "matched" as const,
+          origin: chains[Math.floor(rng.next() * chains.length)]?.[0] ?? entry.origin,
+        }),
+      ),
+      8,
+    );
+    const breakdown = shareRows(
+      chains.map(([name, millions]) => ({ name, weight: millions })),
+      summary.declaredInboundUsd,
+    );
+
+    return {
+      path: `/route/${toSlug(bridge.name)}`,
+      route: bridge.name,
+      slug: toSlug(bridge.name),
+      identifier: bridge.identifier,
+      title: `${bridge.name} arrivals on Solana`,
+      summary,
+      daily,
+      topEntries,
+      breakdown,
+      prose: routeProse(bridge.name, bridge.identifier, summary, breakdown, topEntries, DAY_WINDOW),
+      updatedAt: new Date(this.now()).toISOString(),
+    };
+  }
+
+  /** A 30-day window scaled to one origin or route's share of the whole. */
+  private async scaledWindow(seedKey: string, share: number) {
+    const base = await this.getDailyFlows(DAY_WINDOW);
+    const rng = this.rngFor(seedKey);
+    const days = base.days.map((day) => {
+      // ±25% jitter so a route's shape is its own rather than the market's
+      // curve scaled down, which would make every page look identical.
+      const wobble = 0.75 + rng.next() * 0.5;
+      return {
+        date: day.date,
+        grossUsd: day.grossUsd * share * wobble,
+        heldUsd: day.heldUsd * share * wobble,
+      };
+    });
+    const grossUsd = days.reduce((sum, d) => sum + d.grossUsd, 0);
+    const heldUsd = days.reduce((sum, d) => sum + Math.max(0, d.heldUsd), 0);
+    const summary: FlowSummary = {
+      range: "30d",
+      declaredInboundUsd: grossUsd,
+      stillOnSolanaUsd: heldUsd,
+      unspentUsd: heldUsd * UNSPENT_OF_HELD,
+      reexportedUsd: Math.max(0, grossUsd - heldUsd),
+      entryCount: Math.round((grossUsd / RANGE_FIGURES["30d"][0]) * RANGE_ENTRY_COUNT["30d"]),
+      medianLagMs: MEDIAN_LAG_MS,
+    };
+    return {
+      summary,
+      daily: {
+        days,
+        averageHeldUsd: days.reduce((sum, d) => sum + Math.max(0, d.heldUsd), 0) / days.length,
+      },
+    };
+  }
+}
+
+/** Largest first, capped. */
+function topBy(entries: Entry[], limit: number): Entry[] {
+  return [...entries].sort((a, b) => b.amountUsd - a.amountUsd).slice(0, limit);
+}
+
+/** Weights to USD rows that sum to the total, largest first. */
+function shareRows(
+  items: ReadonlyArray<{ name: string; weight: number }>,
+  totalUsd: number,
+): BreakdownRow[] {
+  const sum = items.reduce((acc, item) => acc + item.weight, 0) || 1;
+  return items
+    .map((item) => ({
+      name: item.name,
+      slug: toSlug(item.name),
+      usd: (item.weight / sum) * totalUsd,
+      share: item.weight / sum,
+    }))
+    .sort((a, b) => b.usd - a.usd);
+}
+
+function scaleDwell(grossUsd: number, heldUsd: number): DwellBreakdown {
+  const factor = grossUsd / RANGE_FIGURES["24h"][0];
+  const unspentUsd = heldUsd * UNSPENT_OF_HELD;
+  return {
+    buckets: DWELL_BUCKETS.map(([label, usd, share, idle]) => ({
+      label,
+      usd: usd * factor,
+      share,
+      idle,
+    })),
+    unspentUsd,
+    unspentShare: heldUsd > 0 ? unspentUsd / heldUsd : 0,
+  };
+}
+
+function scaleFirstUse(grossUsd: number): FirstUseRow[] {
+  const factor = grossUsd / RANGE_FIGURES["24h"][0];
+  return PROGRAM_GROUPS.map((group) => {
+    const figures = FIRST_USE_FIGURES[group.category] ?? [0, 0];
+    return {
+      category: group.category,
+      name: group.name,
+      detail: group.detail,
+      usd: figures[0] * factor,
+      share: figures[1],
+    };
+  });
 }
 
 /**

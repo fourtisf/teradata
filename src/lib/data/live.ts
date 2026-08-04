@@ -15,6 +15,7 @@ import type {
   Coverage,
   DailySeries,
   DataProvider,
+  DayPage,
   DwellBreakdown,
   Entry,
   EntryQuery,
@@ -23,7 +24,10 @@ import type {
   HomeSnapshot,
   IndexerStatus,
   OriginCard,
+  OriginPage,
+  PageRef,
   Range,
+  RoutePage,
 } from "@/lib/data/types";
 
 function notImplemented(method: string): never {
@@ -70,5 +74,29 @@ export class LiveProvider implements DataProvider {
 
   async getHomeSnapshot(): Promise<HomeSnapshot> {
     notImplemented("getHomeSnapshot");
+  }
+
+  async getDayPage(_date: string): Promise<DayPage | null> {
+    notImplemented("getDayPage");
+  }
+
+  async getOriginPage(_slug: string): Promise<OriginPage | null> {
+    notImplemented("getOriginPage");
+  }
+
+  async getRoutePage(_slug: string): Promise<RoutePage | null> {
+    notImplemented("getRoutePage");
+  }
+
+  async listDays(_limit: number): Promise<string[]> {
+    notImplemented("listDays");
+  }
+
+  async listOrigins(): Promise<PageRef[]> {
+    notImplemented("listOrigins");
+  }
+
+  async listRoutes(): Promise<PageRef[]> {
+    notImplemented("listRoutes");
   }
 }
