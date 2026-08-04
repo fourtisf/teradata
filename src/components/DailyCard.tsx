@@ -84,7 +84,7 @@ export function DailyCard({ summary, date }: { summary: FlowSummary; date: strin
     ctx.fillStyle = token("--txt");
     ctx.font = `600 26px ${display}`;
     // Clear space to the left of the wordmark ≈ the core's diameter.
-    ctx.fillText("Manifest", 152, 146);
+    ctx.fillText("Tare", 152, 146);
 
     ctx.fillStyle = token("--txt-3");
     ctx.font = `400 20px ${mono}`;
@@ -122,7 +122,7 @@ export function DailyCard({ summary, date }: { summary: FlowSummary; date: strin
     });
 
     const link = document.createElement("a");
-    link.download = `manifest-${isoDate(date)}.png`;
+    link.download = `tare-${isoDate(date)}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
   };
@@ -135,7 +135,7 @@ export function DailyCard({ summary, date }: { summary: FlowSummary; date: strin
       <div className="sharecard">
         <div className="sh-top">
           <BrandMark size={21} />
-          <b ref={displayRef}>Manifest</b>
+          <b ref={displayRef}>Tare</b>
           <span className="num">{longDate(date)}</span>
         </div>
         <div className="sh-big num" ref={monoRef}>

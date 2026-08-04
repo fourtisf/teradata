@@ -33,7 +33,7 @@ export function MethodSection() {
             nothing behind.
           </p>
           <p>
-            Manifest matches each arrival to the receiving wallet and watches whether the balance
+            Tare matches each arrival to the receiving wallet and watches whether the balance
             survives the window. <strong>Round trips are found and removed.</strong>
           </p>
           <p>
@@ -51,7 +51,7 @@ export function MethodSection() {
             </div>
           ))}
           <div className="lr tot">
-            <span>Counted by Manifest</span>
+            <span>Counted by Tare</span>
             <span>{exactMoney(COUNTED_USD)}</span>
           </div>
         </Reveal>

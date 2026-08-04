@@ -1,10 +1,10 @@
-# manifest
+# tare
 
 Capital arriving on Solana, and whether it stayed.
 
 This document is the complete build spec. Hand it to Claude Code as persistent
 context (copy it to `CLAUDE.md` at the repo root) and work through the phases in
-order. The design prototype is `manifest-v2.html` — it is the visual source of
+order. The design prototype is `prototype-v2.html` — it is the visual source of
 truth, but it uses simulated data and is not the production architecture.
 
 ---
@@ -15,7 +15,7 @@ Every other dashboard reports **gross bridge volume**. A market maker that moves
 $40M into Solana and $40M back out within the hour adds $80M to that number while
 leaving nothing behind.
 
-Manifest matches each arrival to the wallet that received it, watches whether the
+Tare matches each arrival to the wallet that received it, watches whether the
 balance survives a 24-hour window, and removes the round trips. What is left is
 capital that is actually on the chain.
 
@@ -35,7 +35,7 @@ rests on the number being defensible.
 
 ### The house rule — non-negotiable
 
-**Manifest reports measured flow. It never names who moved the money.**
+**Tare reports measured flow. It never names who moved the money.**
 
 Never write "Jump bridged $20M" or "Wintermute is accumulating." Wallets are
 described only by what is verifiable: first seen or returning, funded from which
@@ -225,7 +225,7 @@ Postgres: `users`, `subscriptions`, `alert_rules`, `alert_deliveries`, `api_keys
 
 ## 5. Design system
 
-Taken from `manifest-v2.html`. Put these in `globals.css` as CSS custom
+Taken from `prototype-v2.html`. Put these in `globals.css` as CSS custom
 properties and never hardcode a colour in a component.
 
 ```css
@@ -374,9 +374,9 @@ Paste this to start:
 > Read `CLAUDE.md` in full before writing any code. Build P0 only, then stop and
 > report.
 >
-> Scaffold a Next.js App Router project in TypeScript for Manifest, a Solana
+> Scaffold a Next.js App Router project in TypeScript for Tare, a Solana
 > capital-inflow tracker. Set up the design tokens from §5 in `globals.css` and
-> build the full page structure from `manifest-v2.html`: nav with freshness
+> build the full page structure from `prototype-v2.html`: nav with freshness
 > indicator, hero with range selector and three figures, 30-day gross-vs-held
 > chart, live manifest table with expandable row traces, dwell breakdown, first-use
 > list, origin cards with sparklines, method section, alerts and daily card,
@@ -407,5 +407,20 @@ Paste this to start:
 - Re-export window: 24h assumed. Sensitivity check once real data exists — 12h and
   48h will produce visibly different headline numbers and we should know by how
   much before publishing a figure we have to defend.
-- Domain and brand lock: `manifest` is the working name. Confirm before the logo
-  and OG images get baked into the card generator.
+### Closed
+
+- **Brand and domain — locked.** The product is **Tare**, on `taredata.com`.
+  Named after the weighing term: the deduction you make from gross to get net,
+  which is the whole method. It replaced `manifest`, which was correct in meaning
+  — a manifest is the document, not the cargo — but unwinnable in search against
+  `manifest.json`, web app manifests and Kubernetes manifests. §8's entire plan is
+  organic traffic, so a brand term nobody can rank for was disqualifying.
+
+  Note the one word deliberately kept: the live entry table is still called **the
+  manifest**. That is the shipping document, not the old brand, and it sits in the
+  same port vocabulary as tare.
+
+- **Logo — locked.** *Aperture*: two rings and a core, the hero portal reduced.
+  Geometry and its constraints are documented in `src/components/Brand.tsx`, and
+  the daily-card canvas draws from the same exported `MARK` constants so the shape
+  cannot drift between surfaces.

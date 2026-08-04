@@ -15,7 +15,7 @@ const TIERS: Tier[] = [
     price: "$0",
     features: [
       "Daily held figure and origin table",
-      "Manifest delayed 15 minutes",
+      "The manifest, delayed 15 minutes",
       "Entries over $1M only",
       "Daily card",
     ],

@@ -104,7 +104,7 @@ export function AlertRules() {
       <div className="tg">
         <div className="hd">
           <span className="av" aria-hidden="true" />
-          <span className="nm">Manifest alerts</span>
+          <span className="nm">Tare alerts</span>
           <span className="tme">14:22 UTC</span>
         </div>
         <div className="msg" aria-live="polite">

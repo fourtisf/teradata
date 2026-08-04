@@ -1,9 +1,9 @@
-# Manifest
+# Tare
 
-Capital arriving on Solana, and whether it stayed.
+Capital arriving on Solana, and whether it stayed. Live at **taredata.com**.
 
 `CLAUDE.md` is the build spec and the persistent context for this repo — read it
-before changing anything. `manifest-v2.html` is the design prototype and the
+before changing anything. `prototype-v2.html` is the design prototype and the
 visual source of truth. This README covers only what P0 actually is.
 
 ## Status: P0 complete
@@ -99,7 +99,7 @@ Checked against a real browser at 1440px and 360px:
 
 - **No wallet connect.** No connect button, no signature, no custody surface, no
   private key anywhere in the system.
-- **No entity attribution.** Manifest reports measured flow and never names who
+- **No entity attribution.** Tare reports measured flow and never names who
   moved the money. There is no `entity_name` field in the schema and there must
   never be one. Wallets are described only by what is verifiable: first seen or
   returning, funded from which venue, idle for how long.

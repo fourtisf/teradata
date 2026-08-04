@@ -28,19 +28,32 @@ const mono = JetBrains_Mono({
   display: "swap",
 });
 
-const TITLE = "Manifest — Capital arriving on Solana";
+const TITLE = "Tare — Capital arriving on Solana";
 const DESCRIPTION =
   "Bridges and exchange withdrawals, matched to the wallet that received them and followed " +
   "after landing. Round trips are removed, so the number you see is money that is actually here.";
 
+/**
+ * §8 lives or dies on this. Without a metadataBase, Open Graph and canonical
+ * URLs resolve relative and crawlers see nothing usable — which is exactly the
+ * failure mode that stays invisible until months of traffic have been lost.
+ * Vercel sets VERCEL_URL on previews; production is the real domain.
+ */
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SITE_URL)
+  : new URL("https://taredata.com");
+
 export const metadata: Metadata = {
+  metadataBase: SITE_URL,
   title: TITLE,
   description: DESCRIPTION,
-  applicationName: "Manifest",
+  applicationName: "Tare",
+  alternates: { canonical: "/" },
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,
-    siteName: "Manifest",
+    siteName: "Tare",
+    url: "/",
     type: "website",
   },
   twitter: {

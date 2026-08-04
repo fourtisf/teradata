@@ -7,7 +7,7 @@ export function Nav() {
       <div className="nav-in">
         <a className="brand" href="#top">
           <BrandMark />
-          <b>Manifest</b>
+          <b>Tare</b>
         </a>
         <span className="fresh">
           <span className="dot" />
