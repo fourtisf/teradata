@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manifest — Capital arriving on Solana</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0C0718; --surface:#171029; --surface-2:#1D1533;
+  --txt:#F1EDFF; --txt-2:#948BB4; --txt-3:#6B6390;
+  --line:rgba(241,237,255,.08); --line-2:rgba(241,237,255,.16);
+  --violet:#7C5CFF; --violet-lt:#A78BFA; --violet-dim:rgba(124,92,255,.14);
+  --green:#34D399; --green-dim:rgba(52,211,153,.13);
+  --rose:#F87189; --rose-dim:rgba(248,113,137,.13);
+  --display:"Sora",sans-serif; --body:"Plus Jakarta Sans",-apple-system,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+  --gut:clamp(18px,5vw,56px); --maxw:1200px; --r:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{background:var(--bg);color:var(--txt);font-family:var(--body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--violet);outline-offset:3px;border-radius:8px}
+::selection{background:rgba(124,92,255,.35)}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--gut)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.eyebrow{font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-3)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.seg{display:inline-flex;gap:2px;background:rgba(241,237,255,.04);padding:3px;border-radius:9px}
+.seg button{font-family:var(--body);font-size:12px;padding:6px 13px;border-radius:7px;color:var(--txt-3);cursor:pointer;border:0;background:none;transition:all .22s ease}
+.seg button.on{background:var(--violet);color:#fff;font-weight:600}
+.btn{font-family:var(--body);font-weight:600;font-size:13.5px;padding:10px 18px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:background .25s ease,border-color .25s ease}
+.btn-primary{background:var(--violet);color:#fff;border:1px solid var(--violet)}
+.btn-primary:hover{background:#8F73FF}
+.btn-ghost{background:transparent;border:1px solid var(--line-2);color:var(--txt)}
+.btn-ghost:hover{border-color:var(--txt-3);background:rgba(241,237,255,.03)}
+
+/* nav */
+nav{position:sticky;top:0;z-index:50;background:rgba(12,7,24,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+.nav-in{max-width:var(--maxw);margin:0 auto;padding:0 var(--gut);height:62px;display:flex;align-items:center;gap:20px}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+.brand b{font-family:var(--display);font-weight:600;font-size:16px;letter-spacing:-.01em}
+.fresh{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;color:var(--txt-3)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex:none;animation:blip 2.4s ease-in-out infinite}
+@keyframes blip{0%,100%{opacity:1}50%{opacity:.35}}
+@media(max-width:780px){.fresh{display:none}}
+
+/* hero */
+.hero{padding:clamp(46px,7vw,88px) 0 clamp(40px,5vw,64px);display:grid;grid-template-columns:1.12fr .88fr;gap:clamp(24px,4vw,48px);align-items:center}
+.tagline{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--txt-2);margin-bottom:20px}
+.tagline .dot{width:5px;height:5px}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(31px,4.8vw,54px);line-height:1.08;letter-spacing:-.035em;max-width:16ch}
+.sub{margin-top:18px;font-size:16px;color:var(--txt-2);max-width:47ch}
+.hero-cta{display:flex;gap:11px;margin-top:28px;flex-wrap:wrap}
+.range-bar{display:flex;align-items:center;gap:12px;margin-top:34px;flex-wrap:wrap}
+.range-bar .lb{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--txt-3)}
+.hero-figs{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:12px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.fig{background:var(--surface);padding:16px 18px}
+.fig .v{font-family:var(--mono);font-size:20px;font-weight:600;letter-spacing:-.02em}
+.fig .k{font-size:11.5px;color:var(--txt-3);margin-top:5px}
+.fig.gd .v{color:var(--green)}
+@media(max-width:520px){.hero-figs{grid-template-columns:1fr}}
+
+/* portal */
+.portal{position:relative;height:clamp(240px,36vw,400px);display:grid;place-items:center;perspective:1000px}
+.halo{position:absolute;width:74%;aspect-ratio:1;border-radius:50%;filter:blur(46px);background:radial-gradient(circle,rgba(124,92,255,.4),transparent 68%);animation:breathe 7s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.07);opacity:1}}
+.rings{position:relative;width:min(74%,330px);aspect-ratio:1;transform-style:preserve-3d;transform:rotateX(66deg);animation:spin 30s linear infinite}
+@keyframes spin{to{transform:rotateX(66deg) rotateZ(360deg)}}
+.ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(124,92,255,.42)}
+.ring:nth-child(1){transform:translateZ(0) scale(1)}
+.ring:nth-child(2){transform:translateZ(30px) scale(.84)}
+.ring:nth-child(3){transform:translateZ(60px) scale(.66);border-color:rgba(124,92,255,.55)}
+.ring:nth-child(4){transform:translateZ(92px) scale(.46);border-color:rgba(52,211,153,.5)}
+.ring:nth-child(5){transform:translateZ(-36px) scale(1.16);border-color:rgba(124,92,255,.2)}
+.core{position:absolute;width:20%;aspect-ratio:1;border-radius:50%;background:#B9A5FF;box-shadow:0 0 40px rgba(124,92,255,.85);animation:breathe 7s ease-in-out infinite}
+.streams{position:absolute;inset:0;width:100%;height:100%}
+.streams path{fill:none;stroke:rgba(124,92,255,.6);stroke-width:1.4;stroke-linecap:round;stroke-dasharray:4 14;animation:dash 2.6s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-36}}
+.chip{position:absolute;font-family:var(--mono);font-size:10.5px;padding:5px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line-2);color:var(--txt-2);white-space:nowrap}
+.chip b{color:var(--txt);font-weight:600}
+.c1{left:0;top:15%} .c2{left:-2%;top:53%} .c3{right:0;top:27%} .c4{right:2%;bottom:13%}
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;gap:8px}
+  .portal{height:210px;margin-top:6px}
+  .chip{display:none}
+  h1{max-width:100%}
+}
+
+/* sections */
+section{padding:clamp(48px,6.5vw,84px) 0;border-top:1px solid var(--line)}
+.s-head{margin-bottom:clamp(22px,3.2vw,34px);max-width:60ch}
+.s-head h2{font-family:var(--display);font-weight:600;font-size:clamp(22px,3vw,32px);letter-spacing:-.03em;margin:11px 0 0}
+.s-head p{color:var(--txt-2);margin-top:11px;font-size:15px}
+.s-row{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:clamp(20px,3vw,30px)}
+
+/* chart */
+.chart-wrap{padding:22px 24px 16px}
+.chart-legend{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:18px}
+.lg{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--txt-2)}
+.lg i{width:11px;height:11px;border-radius:3px;flex:none;display:block}
+.lg .gross{background:rgba(124,92,255,.22)}
+.lg .net{background:var(--violet)}
+.lg .neg{background:var(--rose)}
+#chart{width:100%;height:auto;display:block;overflow:visible}
+.bar-g{cursor:pointer}
+.bar-g:hover .hit{fill:rgba(241,237,255,.05)}
+.chart-foot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:12px;font-family:var(--mono);font-size:11px;color:var(--txt-3)}
+.tip{position:absolute;pointer-events:none;background:var(--surface-2);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;font-size:12px;opacity:0;transition:opacity .18s ease;z-index:20;white-space:nowrap}
+.tip b{font-family:var(--mono);display:block;font-size:13px;margin-top:3px}
+
+/* manifest */
+.p-top{display:flex;align-items:center;gap:12px;padding:15px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.p-top h3{font-family:var(--display);font-size:15px;font-weight:600;margin-right:auto}
+.mini{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-3);background:none;border:1px solid var(--line-2);border-radius:7px;padding:6px 10px;cursor:pointer;transition:all .22s ease}
+.mini:hover{color:var(--txt);border-color:var(--txt-3)}
+.mini.on{color:var(--violet-lt);border-color:var(--violet)}
+.rows{max-height:430px;overflow:hidden;position:relative;transition:max-height .3s ease}
+.rows.open{max-height:none}
+.fade{position:absolute;inset:auto 0 0 0;height:64px;pointer-events:none;background:linear-gradient(to top,var(--surface),transparent)}
+.rows.open .fade{display:none}
+.rhead,.row{display:grid;grid-template-columns:62px 1.05fr .9fr .88fr .8fr .52fr 112px 22px;gap:13px;align-items:center;padding:12px 20px}
+.rhead{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--txt-3);border-bottom:1px solid var(--line)}
+.entry{border-bottom:1px solid var(--line)}
+.row{font-size:13px;color:var(--txt-2);cursor:pointer;transition:background .22s ease}
+.row:hover{background:rgba(241,237,255,.025)}
+.entry.open .row{background:rgba(124,92,255,.07)}
+.row .amt{font-family:var(--mono);font-weight:600;color:var(--txt);font-variant-numeric:tabular-nums}
+.row .tm{font-family:var(--mono);font-size:12px}
+.row .org{color:var(--txt);font-weight:500}
+.caret{font-size:15px;color:var(--txt-3);text-align:center;transition:transform .25s ease;line-height:1}
+.entry.open .caret{transform:rotate(90deg);color:var(--violet-lt)}
+.entry.new{animation:land .55s cubic-bezier(.2,.8,.2,1)}
+@keyframes land{0%{opacity:0;transform:translateY(-10px);background:var(--violet-dim)}100%{opacity:1;transform:none;background:transparent}}
+.tagx{font-size:10px;padding:4px 8px;border-radius:6px;border:1px solid var(--line-2);white-space:nowrap;display:inline-block;color:var(--txt-3)}
+.tagx.first{border-color:transparent;background:var(--green-dim);color:var(--green)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:5px 10px;border-radius:6px;white-space:nowrap;font-weight:500}
+.pill i{width:5px;height:5px;border-radius:50%;flex:none}
+.s-settling{background:rgba(241,237,255,.05);color:var(--txt-3)} .s-settling i{background:var(--txt-3)}
+.s-held{background:var(--green-dim);color:var(--green)} .s-held i{background:var(--green)}
+.s-deployed{background:var(--violet-dim);color:var(--violet-lt)} .s-deployed i{background:var(--violet-lt)}
+.s-out{background:var(--rose-dim);color:var(--rose)} .s-out i{background:var(--rose)}
+
+/* trace */
+.trace{display:none;padding:4px 20px 22px;background:rgba(124,92,255,.04)}
+.entry.open .trace{display:block}
+.tsteps{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:8px}
+.ts{background:var(--surface);padding:14px 15px}
+.ts .n{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--txt-3)}
+.ts .m{font-size:13px;margin-top:8px;font-weight:500}
+.ts .d{font-family:var(--mono);font-size:11.5px;color:var(--txt-3);margin-top:5px;word-break:break-all}
+.ts .d.ok{color:var(--green)}
+.trace-note{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px;font-size:12.5px;color:var(--txt-3)}
+.trace-note code{font-family:var(--mono);font-size:11.5px;color:var(--txt-2);background:rgba(241,237,255,.05);padding:3px 7px;border-radius:5px}
+
+/* empty */
+.empty{display:none;padding:56px 24px;text-align:center}
+.rows.quiet .entry{display:none}
+.rows.quiet .empty{display:block}
+.empty .ic{width:44px;height:44px;margin:0 auto 16px;border-radius:50%;border:1px solid var(--line-2);display:grid;place-items:center;color:var(--txt-3);font-family:var(--mono);font-size:14px}
+.empty h5{font-family:var(--display);font-size:16px;font-weight:600;margin-bottom:8px}
+.empty p{font-size:13.5px;color:var(--txt-3);max-width:38ch;margin:0 auto}
+.p-bot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:14px 20px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--txt-3)}
+
+/* dwell */
+.grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:16px}
+.pad{padding:24px}
+.pad h4{font-family:var(--display);font-size:15.5px;font-weight:600;margin-bottom:3px}
+.pad .hint{font-size:13px;color:var(--txt-3);margin-bottom:20px}
+.bar-row{display:grid;grid-template-columns:92px 1fr 76px;gap:14px;align-items:center;padding:9px 0}
+.bar-row span:first-child{font-size:12.5px;color:var(--txt-2)}
+.track{height:8px;border-radius:4px;background:rgba(241,237,255,.06);overflow:hidden}
+.fill{height:100%;width:0;border-radius:4px;background:var(--violet);transition:width 1.3s cubic-bezier(.2,.8,.2,1)}
+.fill.g{background:var(--green)}
+.bar-row .v{font-family:var(--mono);font-size:12.5px;text-align:right;font-variant-numeric:tabular-nums}
+.spot{display:flex;flex-direction:column;justify-content:center;padding:28px}
+.spot .big{font-family:var(--display);font-weight:600;font-size:clamp(34px,4.6vw,50px);letter-spacing:-.045em;line-height:1;color:var(--green)}
+.spot .cap{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--txt-3);margin-top:12px}
+.spot p{font-size:14px;color:var(--txt-2);margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+
+/* destinations */
+.dlist{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface)}
+.dcard{display:grid;grid-template-columns:34px 1.4fr 2.2fr 96px;gap:18px;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line);transition:background .22s ease}
+.dcard:last-child{border-bottom:0}
+.dcard:hover{background:rgba(241,237,255,.025)}
+.dcard .rank{font-family:var(--mono);font-size:11.5px;color:var(--txt-3)}
+.dcard .nm{font-weight:600;font-size:14px}
+.dcard .nm em{display:block;font-style:normal;font-weight:400;font-size:12.5px;color:var(--txt-3);margin-top:2px}
+.dcard .val{font-family:var(--mono);font-size:14px;text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+@media(max-width:720px){.dcard{grid-template-columns:26px 1fr 88px;row-gap:12px}.dcard .track{grid-column:2/4}}
+
+/* origins */
+.ogrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.ocard{background:var(--surface);padding:20px;transition:background .22s ease}
+.ocard:hover{background:var(--surface-2)}
+.ocard .nm{font-size:13px;color:var(--txt-2)}
+.ocard .vl{font-family:var(--mono);font-size:21px;margin-top:10px;font-weight:600;letter-spacing:-.02em}
+.ocard .dl{font-size:12px;margin-top:6px;color:var(--txt-3)}
+.ocard .dl.up{color:var(--green)}
+.spark{display:block;margin-top:12px;width:100%;height:26px;overflow:visible}
+
+/* method */
+.method{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.method p{color:var(--txt-2);margin-bottom:15px;font-size:15px}
+.method p:last-child{margin-bottom:0}
+.method p strong{color:var(--txt);font-weight:600}
+.lc{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--txt-3);margin-bottom:16px}
+.lr{display:flex;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.lr span:first-child{color:var(--txt-2)}
+.lr span:last-child{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.lr.out span:last-child{color:var(--rose)}
+.lr.tot{border-bottom:0;padding-top:16px;margin-top:4px;border-top:1px solid var(--line-2)}
+.lr.tot span{font-weight:600;font-size:15px}
+.lr.tot span:last-child{color:var(--green)}
+@media(max-width:900px){.method{grid-template-columns:1fr}}
+
+/* alerts + share */
+.take{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.rules{display:flex;flex-direction:column;gap:9px;margin-top:18px}
+.rule{display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid var(--line);border-radius:11px;background:rgba(241,237,255,.02);cursor:pointer;transition:border-color .22s ease}
+.rule:hover{border-color:var(--line-2)}
+.rule.on{border-color:var(--violet)}
+.sw{width:32px;height:19px;border-radius:999px;background:rgba(241,237,255,.12);flex:none;position:relative;transition:background .25s ease}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:13px;height:13px;border-radius:50%;background:var(--txt-3);transition:all .25s ease}
+.rule.on .sw{background:var(--violet)}
+.rule.on .sw::after{left:16px;background:#fff}
+.rule .rt{font-size:13px;color:var(--txt-2)}
+.rule .rt b{color:var(--txt);font-weight:600}
+.tg{margin-top:18px;padding:15px 16px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)}
+.tg .hd{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.tg .av{width:24px;height:24px;border-radius:7px;background:var(--violet);flex:none}
+.tg .nm{font-size:12.5px;font-weight:600}
+.tg .tme{font-family:var(--mono);font-size:10.5px;color:var(--txt-3);margin-left:auto}
+.tg .msg{font-family:var(--mono);font-size:12px;color:var(--txt-2);line-height:1.75}
+.tg .msg b{color:var(--txt);font-weight:600}
+.tg .msg .g{color:var(--green)}
+.sharecard{border:1px solid var(--line-2);border-radius:12px;padding:24px;background:var(--bg);margin-top:18px}
+.sharecard .sh-top{display:flex;align-items:center;gap:9px;margin-bottom:20px}
+.sharecard .sh-top b{font-family:var(--display);font-size:13px;font-weight:600}
+.sharecard .sh-top span{font-family:var(--mono);font-size:10.5px;color:var(--txt-3);margin-left:auto}
+.sharecard .sh-big{font-family:var(--mono);font-size:clamp(26px,4vw,36px);font-weight:600;letter-spacing:-.03em;color:var(--green)}
+.sharecard .sh-lb{font-size:12.5px;color:var(--txt-2);margin-top:6px}
+.sharecard .sh-sub{display:flex;gap:22px;margin-top:20px;padding-top:18px;border-top:1px solid var(--line);flex-wrap:wrap}
+.sharecard .sh-sub div{font-size:11.5px;color:var(--txt-3)}
+.sharecard .sh-sub b{display:block;font-family:var(--mono);font-size:14px;color:var(--txt);font-weight:600;margin-bottom:3px}
+@media(max-width:900px){.take{grid-template-columns:1fr}}
+
+/* coverage */
+.cov{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.cchip{font-size:12.5px;padding:7px 12px;border-radius:8px;border:1px solid var(--line);color:var(--txt-2);display:flex;align-items:center;gap:7px}
+.cchip i{width:5px;height:5px;border-radius:50%;background:var(--green);flex:none}
+.cchip.no{color:var(--txt-3)}
+.cchip.no i{background:var(--txt-3)}
+.cov small{display:block;margin-top:16px;font-size:12.5px;color:var(--txt-3);line-height:1.65}
+@media(max-width:820px){.cov{grid-template-columns:1fr}}
+
+/* status strip */
+.status{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-top:16px}
+.st{background:var(--surface);padding:16px 18px}
+.st .k{font-size:11.5px;color:var(--txt-3)}
+.st .v{font-family:var(--mono);font-size:14px;margin-top:6px;font-weight:500}
+.st .v.ok{color:var(--green)}
+
+/* pricing */
+.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.tier{padding:26px;display:flex;flex-direction:column}
+.tier.hot{border-color:var(--violet)}
+.tier .tn{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--txt-3)}
+.tier.hot .tn{color:var(--violet-lt)}
+.tier .pr{font-family:var(--display);font-size:32px;font-weight:600;margin:14px 0 2px;letter-spacing:-.035em}
+.tier .pr small{font-size:13px;color:var(--txt-3);font-weight:400;font-family:var(--body)}
+.tier ul{list-style:none;margin:20px 0 24px;display:flex;flex-direction:column;gap:11px}
+.tier li{font-size:13.5px;color:var(--txt-2);padding-left:20px;position:relative}
+.tier li::before{content:"";position:absolute;left:0;top:9px;width:6px;height:6px;border-radius:50%;background:var(--txt-3)}
+.tier.hot li::before{background:var(--violet)}
+.tier .btn{margin-top:auto;width:100%}
+
+footer{padding:clamp(42px,5.5vw,68px) 0 44px;border-top:1px solid var(--line)}
+.note{padding:22px 24px;margin-bottom:30px;max-width:680px}
+.note .eyebrow{display:block;margin-bottom:10px}
+.note p{font-size:14px;color:var(--txt-2)}
+.fbot{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--txt-3)}
+.flinks{display:flex;gap:20px;flex-wrap:wrap}
+.flinks a:hover{color:var(--txt)}
+
+.rv{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.8,.2,1)}
+.rv.in{opacity:1;transform:none}
+
+@media(max-width:920px){
+  .rhead,.row{grid-template-columns:56px 1fr .82fr .68fr 102px 20px;font-size:12px;padding:12px 15px;gap:11px}
+  .rhead span:nth-child(3),.row .c-rt,.rhead span:nth-child(6),.row .c-dw{display:none}
+}
+@media(max-width:560px){
+  .rhead,.row{grid-template-columns:1fr .74fr 96px 18px;gap:9px}
+  .rhead span:nth-child(1),.row .tm,.rhead span:nth-child(5),.row .c-to{display:none}
+  .trace{padding:4px 15px 18px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-in">
+    <a class="brand" href="#top">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+        <rect width="26" height="26" rx="8" fill="#7C5CFF"/>
+        <path d="M5.6 8.4A6.6 6.6 0 0 1 5.6 17.6" stroke="#0C0718" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M9.4 10.2a3.4 3.4 0 0 1 0 5.6" stroke="#0C0718" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="17.2" cy="13" r="3.1" fill="#0C0718"/>
+      </svg>
+      <b>Manifest</b>
+    </a>
+    <span class="fresh"><span class="dot"></span><span id="freshLbl">updated 0s ago</span></span>
+    <a class="btn btn-primary" href="#access">Watch the port</a>
+  </div>
+</nav>
+
+<div class="wrap" id="top">
+
+<div class="hero">
+  <div>
+    <span class="tagline"><span class="dot"></span> Live · Solana port of entry</span>
+    <h1>Capital arriving on Solana, and whether it stayed.</h1>
+    <p class="sub">Bridges and exchange withdrawals, matched to the wallet that received them and followed after landing. Round trips are removed, so the number you see is money that is actually here.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="#access">Start watching</a>
+      <a class="btn btn-ghost" href="#method">How it's measured</a>
+    </div>
+    <div class="range-bar">
+      <span class="lb">Range</span>
+      <span class="seg" id="rangeSeg">
+        <button data-r="1h">1h</button><button data-r="24h" class="on">24h</button><button data-r="7d">7d</button><button data-r="30d">30d</button>
+      </span>
+    </div>
+    <div class="hero-figs">
+      <div class="fig"><div class="v num" id="f1">$412.9M</div><div class="k">Declared inbound</div></div>
+      <div class="fig gd"><div class="v num" id="f2">$268.4M</div><div class="k">Still on Solana</div></div>
+      <div class="fig"><div class="v num" id="f3">$29.6M</div><div class="k">Landed and unspent</div></div>
+    </div>
+  </div>
+
+  <div class="portal">
+    <div class="halo"></div>
+    <svg class="streams" viewBox="0 0 500 460" aria-hidden="true">
+      <path d="M18 92 C 150 120, 195 190, 246 226"/>
+      <path style="animation-delay:-.9s" d="M6 250 C 130 258, 180 236, 246 230"/>
+      <path style="animation-delay:-1.6s" d="M486 148 C 372 176, 306 200, 254 226"/>
+      <path style="animation-delay:-2.2s" d="M470 386 C 372 330, 300 262, 254 234"/>
+    </svg>
+    <div class="rings"><i class="ring"></i><i class="ring"></i><i class="ring"></i><i class="ring"></i><i class="ring"></i></div>
+    <div class="core"></div>
+    <span class="chip c1">Ethereum <b>$71.4M</b></span>
+    <span class="chip c2">Binance <b>$58.9M</b></span>
+    <span class="chip c3">Base <b>$34.2M</b></span>
+    <span class="chip c4">Hyperliquid <b>$18.6M</b></span>
+  </div>
+</div>
+
+<section>
+  <div class="s-row rv">
+    <div class="s-head" style="margin-bottom:0">
+      <span class="eyebrow">Net inflow</span>
+      <h2>Thirty days of gross against what stayed</h2>
+      <p>The gap between the two bars is the round-trip capital every other dashboard counts as inflow.</p>
+    </div>
+  </div>
+  <div class="card chart-wrap rv" style="position:relative">
+    <div class="chart-legend">
+      <span class="lg"><i class="gross"></i> Gross inbound</span>
+      <span class="lg"><i class="net"></i> Held after window</span>
+      <span class="lg"><i class="neg"></i> Net outflow day</span>
+    </div>
+    <svg id="chart" viewBox="0 0 1000 260" preserveAspectRatio="none" role="img" aria-label="Daily gross inbound versus capital held, last thirty days"></svg>
+    <div class="tip" id="tip"></div>
+    <div class="chart-foot">
+      <span>30 days ago</span><span id="chAvg">Average held · $214M / day</span><span>Today</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="s-head rv">
+    <span class="eyebrow">The manifest</span>
+    <h2>Every entry over $100K, as it lands</h2>
+    <p>Click any line to open its trace: origin transaction, settlement, recipient, and what the capital did first.</p>
+  </div>
+  <div class="card rv" style="overflow:hidden">
+    <div class="p-top">
+      <h3>Live entries</h3>
+      <button class="mini" id="quietBtn">Preview quiet hours</button>
+      <span class="seg"><button class="on">All routes</button><button>Bridges</button><button>Exchanges</button></span>
+    </div>
+    <div class="rhead"><span>Time</span><span>Origin</span><span>Route</span><span>Amount</span><span>Recipient</span><span>Dwell</span><span>Status</span><span></span></div>
+    <div class="rows" id="rows">
+      <div class="empty">
+        <div class="ic">—</div>
+        <h5>The port is quiet</h5>
+        <p>Nothing over $100K has landed in the last 14 minutes. Indexing is live and the next entry will appear here.</p>
+      </div>
+      <div class="fade"></div>
+    </div>
+    <div class="p-bot">
+      <span>Matched entries today <b class="num" style="color:var(--txt)" id="entryCount">2,481</b></span>
+      <span id="pausedLbl">Median settlement lag <b class="num" style="color:var(--txt)">8.2s</b></span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="s-head rv">
+    <span class="eyebrow">Dwell</span>
+    <h2>How long it sits before it moves</h2>
+    <p>Short dwell means the capital arrived with a plan. Long dwell means it is still waiting — and still available.</p>
+  </div>
+  <div class="grid2">
+    <div class="card pad rv">
+      <h4>Time to first move</h4>
+      <div class="hint">Share of today's inflow by dwell window</div>
+      <div class="bar-row"><span>Under 5 min</span><span class="track"><span class="fill" data-w="78"></span></span><span class="v">$96.1M</span></div>
+      <div class="bar-row"><span>5 – 60 min</span><span class="track"><span class="fill" data-w="54"></span></span><span class="v">$66.4M</span></div>
+      <div class="bar-row"><span>1 – 6 hours</span><span class="track"><span class="fill" data-w="38"></span></span><span class="v">$46.8M</span></div>
+      <div class="bar-row"><span>6 – 24 hours</span><span class="track"><span class="fill" data-w="24"></span></span><span class="v">$29.5M</span></div>
+      <div class="bar-row"><span>Still idle</span><span class="track"><span class="fill g" data-w="24"></span></span><span class="v">$29.6M</span></div>
+    </div>
+    <div class="card spot rv">
+      <div class="big">11.0%</div>
+      <div class="cap">of today's inflow, unspent</div>
+      <p>$29.6M landed today and has not moved. Idle capital is the only inflow figure that is forward-looking — everything else has already been spent.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="s-head rv">
+    <span class="eyebrow">First use</span>
+    <h2>Where it went after landing</h2>
+    <p>Bridge explorers stop at settlement. This is the part after, traced by following the receiving wallet's first meaningful action.</p>
+  </div>
+  <div class="dlist rv">
+    <div class="dcard"><span class="rank num">01</span><span class="nm">Spot swaps<em>Jupiter, Titan, direct AMM routes</em></span><span class="track"><span class="fill" data-w="100"></span></span><span class="val">$84.2M</span></div>
+    <div class="dcard"><span class="rank num">02</span><span class="nm">Lending deposits<em>Kamino, MarginFi, Save</em></span><span class="track"><span class="fill" data-w="61"></span></span><span class="val">$51.6M</span></div>
+    <div class="dcard"><span class="rank num">03</span><span class="nm">Perp collateral<em>Drift, Jupiter Perps</em></span><span class="track"><span class="fill" data-w="44"></span></span><span class="val">$36.9M</span></div>
+    <div class="dcard"><span class="rank num">04</span><span class="nm">Liquidity provision<em>Meteora, Orca, Raydium</em></span><span class="track"><span class="fill" data-w="33"></span></span><span class="val">$27.8M</span></div>
+    <div class="dcard"><span class="rank num">05</span><span class="nm">Staking<em>Native and liquid staking</em></span><span class="track"><span class="fill" data-w="22"></span></span><span class="val">$18.3M</span></div>
+    <div class="dcard"><span class="rank num">06</span><span class="nm">Unspent<em>No outbound action since arrival</em></span><span class="track"><span class="fill g" data-w="35"></span></span><span class="val">$29.6M</span></div>
+  </div>
+</section>
+
+<section>
+  <div class="s-head rv"><span class="eyebrow">Origins</span><h2>Net inflow by source, after re-exports</h2><p>Each card carries its own seven-day shape, so a spike is visible without opening anything.</p></div>
+  <div class="ogrid rv" id="ogrid"></div>
+</section>
+
+<section id="method">
+  <div class="s-head rv"><span class="eyebrow">Method</span><h2>Why our number is smaller than everyone else's</h2></div>
+  <div class="method">
+    <div class="card pad rv">
+      <p>Every other dashboard reports <strong>gross bridge volume</strong>. A market maker moving $40M in and $40M back out within the hour adds $80M to that figure while leaving nothing behind.</p>
+      <p>Manifest matches each arrival to the receiving wallet and watches whether the balance survives the window. <strong>Round trips are found and removed.</strong></p>
+      <p>That makes our headline consistently lower. It is also the only version of the number you can trade against.</p>
+    </div>
+    <div class="card pad rv">
+      <div class="lc">One wallet · 14:02 – 15:41 UTC</div>
+      <div class="lr"><span>Arrived from Ethereum</span><span>$41,200,000</span></div>
+      <div class="lr"><span>Arrived from Arbitrum</span><span>$8,400,000</span></div>
+      <div class="lr out"><span>Returned to Ethereum</span><span>−$39,900,000</span></div>
+      <div class="lr"><span>Reported as volume elsewhere</span><span>$89,500,000</span></div>
+      <div class="lr tot"><span>Counted by Manifest</span><span>$9,700,000</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="s-head rv"><span class="eyebrow">Take it with you</span><h2>Alerts and a card worth posting</h2><p>Rules run against the same matched entries, delivered before the move is obvious.</p></div>
+  <div class="take">
+    <div class="card pad rv">
+      <h4>Alert rules</h4>
+      <div class="hint">Toggle to preview the message</div>
+      <div class="rules" id="rules">
+        <div class="rule on" data-k="size"><span class="sw"></span><span class="rt">Single entry over <b>$5M</b> from any source</span></div>
+        <div class="rule" data-k="idle"><span class="sw"></span><span class="rt">Capital that lands and stays <b>idle over 30 min</b></span></div>
+        <div class="rule" data-k="fresh"><span class="sw"></span><span class="rt">A <b>first-seen wallet</b> funded above $1M</span></div>
+      </div>
+      <div class="tg">
+        <div class="hd"><span class="av"></span><span class="nm">Manifest alerts</span><span class="tme">14:22 UTC</span></div>
+        <div class="msg" id="tgMsg"></div>
+      </div>
+    </div>
+    <div class="card pad rv">
+      <h4>Daily card</h4>
+      <div class="hint">One image, generated at 00:00 UTC</div>
+      <div class="sharecard">
+        <div class="sh-top">
+          <svg width="18" height="18" viewBox="0 0 26 26" fill="none" aria-hidden="true"><rect width="26" height="26" rx="8" fill="#7C5CFF"/><circle cx="17.2" cy="13" r="3.1" fill="#0C0718"/><path d="M5.6 8.4A6.6 6.6 0 0 1 5.6 17.6" stroke="#0C0718" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <b>Manifest</b><span>04 Aug 2026</span>
+        </div>
+        <div class="sh-big num">$268.4M</div>
+        <div class="sh-lb">arrived on Solana today and is still here</div>
+        <div class="sh-sub">
+          <div><b class="num">$412.9M</b>declared inbound</div>
+          <div><b class="num">35%</b>left again</div>
+          <div><b class="num">$29.6M</b>still unspent</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost" id="dlCard" style="width:100%;margin-top:16px">Download image</button>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="s-head rv"><span class="eyebrow">Coverage</span><h2>What we index, and what we don't</h2><p>A flow number is only worth as much as the honesty about its edges.</p></div>
+  <div class="cov">
+    <div class="card pad rv">
+      <h4>Indexed today</h4>
+      <div class="chips">
+        <span class="cchip"><i></i>Wormhole</span><span class="cchip"><i></i>deBridge</span><span class="cchip"><i></i>Mayan</span>
+        <span class="cchip"><i></i>Across</span><span class="cchip"><i></i>Allbridge</span><span class="cchip"><i></i>Binance</span>
+        <span class="cchip"><i></i>Coinbase</span><span class="cchip"><i></i>OKX</span><span class="cchip"><i></i>Bybit</span>
+        <span class="cchip"><i></i>Kraken</span><span class="cchip"><i></i>Bitget</span><span class="cchip"><i></i>Hyperliquid</span>
+      </div>
+    </div>
+    <div class="card pad rv">
+      <h4>Not covered yet</h4>
+      <div class="chips">
+        <span class="cchip no"><i></i>OTC desk settlement</span><span class="cchip no"><i></i>Peer-to-peer transfers</span>
+        <span class="cchip no"><i></i>Smaller regional exchanges</span><span class="cchip no"><i></i>Entries under $100K</span>
+      </div>
+      <small>These are excluded from the headline figure rather than estimated. When a source is added, historical data is backfilled and the change is noted on the status page.</small>
+    </div>
+  </div>
+  <div class="status rv">
+    <div class="st"><div class="k">Indexer</div><div class="v ok">Live</div></div>
+    <div class="st"><div class="k">Last slot processed</div><div class="v num" id="slot">341,209,884</div></div>
+    <div class="st"><div class="k">Median settlement lag</div><div class="v num">8.2s</div></div>
+    <div class="st"><div class="k">Data updated</div><div class="v num" id="freshLbl2">0s ago</div></div>
+  </div>
+</section>
+
+<section id="access">
+  <div class="s-head rv"><span class="eyebrow">Access</span><h2>Pick a seat at the port</h2><p>Cancel any time. Data tier includes full matched-entry history.</p></div>
+  <div class="tiers">
+    <div class="card tier rv">
+      <span class="tn">Public</span><div class="pr">$0</div>
+      <ul><li>Daily held figure and origin table</li><li>Manifest delayed 15 minutes</li><li>Entries over $1M only</li><li>Daily card</li></ul>
+      <a class="btn btn-ghost" href="#top">Open the manifest</a>
+    </div>
+    <div class="card tier hot rv">
+      <span class="tn">Desk</span><div class="pr">$79 <small>/ month</small></div>
+      <ul><li>Live manifest from $100K, no delay</li><li>Full trace on every entry</li><li>Dwell and first-use tracing</li><li>Alert rules, Telegram under 10 seconds</li></ul>
+      <a class="btn btn-primary" href="#top">Start</a>
+    </div>
+    <div class="card tier rv">
+      <span class="tn">Data</span><div class="pr">$490 <small>/ month</small></div>
+      <ul><li>Everything in Desk</li><li>REST and websocket feeds</li><li>Full history since indexing began</li><li>Re-export flags included</li></ul>
+      <a class="btn btn-ghost" href="#top">Request keys</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="card note rv">
+    <span class="eyebrow">House rule</span>
+    <p>Manifest reports measured flow. It does not name who moved the money. Wallets are described by what can be verified — first seen or returning, funded from where, holding what — never by a firm's name inferred from a pattern.</p>
+  </div>
+  <div class="fbot">
+    <span>Manifest · Capital arriving on Solana</span>
+    <span class="flinks"><a href="#method">Method</a><a href="#top">Coverage</a><a href="#top">Status</a><a href="#top">Changelog</a><a href="#top">Contact</a></span>
+  </div>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const money = n => n>=1e9 ? '$'+(n/1e9).toFixed(2)+'B' : n>=1e6 ? '$'+(n/1e6).toFixed(1)+'M' : '$'+Math.round(n/1e3)+'K';
+
+  /* ---------- freshness ---------- */
+  let since = 0;
+  const fl = document.getElementById('freshLbl'), fl2 = document.getElementById('freshLbl2');
+  setInterval(()=>{ since++; fl.textContent = 'updated '+since+'s ago'; fl2.textContent = since+'s ago'; },1000);
+  const resetFresh = ()=>{ since = 0; fl.textContent='updated 0s ago'; fl2.textContent='0s ago'; };
+
+  const slotEl = document.getElementById('slot');
+  let slot = 341209884;
+  setInterval(()=>{ slot += 2; slotEl.textContent = slot.toLocaleString('en-US'); },900);
+
+  /* ---------- range ---------- */
+  const ranges = {
+    '1h':  [18.2e6, 11.4e6, 2.1e6],
+    '24h': [412.9e6, 268.4e6, 29.6e6],
+    '7d':  [2.61e9, 1.68e9, 184e6],
+    '30d': [9.84e9, 6.12e9, 612e6]
+  };
+  const f1=document.getElementById('f1'), f2=document.getElementById('f2'), f3=document.getElementById('f3');
+  document.querySelectorAll('#rangeSeg button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('#rangeSeg button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on');
+      const [a,c,d] = ranges[b.dataset.r];
+      f1.textContent = money(a); f2.textContent = money(c); f3.textContent = money(d);
+    });
+  });
+
+  /* ---------- chart ---------- */
+  const days = [];
+  for(let i=29;i>=0;i--){
+    const gross = 260e6 + Math.random()*420e6;
+    const keepR = .38 + Math.random()*.42;
+    let net = gross*keepR;
+    if(Math.random() < .13) net = -(gross*(.04+Math.random()*.12));
+    days.push({i, gross, net, d:new Date(Date.now()-i*864e5)});
+  }
+  const maxG = Math.max(...days.map(d=>d.gross));
+  const minN = Math.min(...days.map(d=>d.net));
+  const svg = document.getElementById('chart'), tip = document.getElementById('tip');
+  const W=1000, H=260, PT=14, PB=42, base = H-PB;
+  const negRoom = Math.max(30, Math.abs(minN)/maxG*(base-PT)+16);
+  const zeroY = base - negRoom*0;
+  const scale = v => (v/maxG)*(base-PT-negRoom);
+  const bw = W/days.length, pad = bw*.24;
+
+  let html = '<line x1="0" y1="'+base+'" x2="'+W+'" y2="'+base+'" stroke="rgba(241,237,255,.14)" stroke-width="1"/>';
+  days.forEach((d,idx)=>{
+    const x = idx*bw + pad/2, w = bw - pad;
+    const gh = scale(d.gross), nh = scale(Math.abs(d.net));
+    html += '<g class="bar-g" data-i="'+idx+'">';
+    html += '<rect class="hit" x="'+(idx*bw)+'" y="0" width="'+bw+'" height="'+H+'" fill="transparent"/>';
+    html += '<rect x="'+x+'" y="'+(base-gh)+'" width="'+w+'" height="'+gh+'" fill="rgba(124,92,255,.22)" rx="2"/>';
+    if(d.net >= 0) html += '<rect x="'+x+'" y="'+(base-nh)+'" width="'+w+'" height="'+nh+'" fill="#7C5CFF" rx="2"/>';
+    else html += '<rect x="'+x+'" y="'+base+'" width="'+w+'" height="'+Math.min(nh,negRoom-6)+'" fill="#F87189" rx="2"/>';
+    html += '</g>';
+  });
+  svg.innerHTML = html;
+  const avgHeld = days.filter(d=>d.net>0).reduce((s,d)=>s+d.net,0)/days.length;
+  document.getElementById('chAvg').textContent = 'Average held · '+money(avgHeld)+' / day';
+
+  const wrapEl = svg.parentElement;
+  svg.querySelectorAll('.bar-g').forEach(g=>{
+    g.addEventListener('mousemove',e=>{
+      const d = days[+g.dataset.i];
+      const r = wrapEl.getBoundingClientRect();
+      tip.innerHTML = '<span style="color:var(--txt-3)">'+d.d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+'</span>'+
+        '<b style="color:var(--txt)">'+money(d.gross)+' gross</b>'+
+        '<b style="color:'+(d.net>=0?'var(--violet-lt)':'var(--rose)')+'">'+(d.net>=0?'':'−')+money(Math.abs(d.net))+(d.net>=0?' held':' net out')+'</b>';
+      tip.style.opacity = 1;
+      tip.style.left = Math.min(Math.max(e.clientX - r.left - 60, 8), r.width-150)+'px';
+      tip.style.top = (e.clientY - r.top - 82)+'px';
+    });
+    g.addEventListener('mouseleave',()=>{ tip.style.opacity = 0; });
+  });
+
+  /* ---------- origins with sparklines ---------- */
+  const origins = [
+    ['Ethereum',71.4,18.2],['Binance',58.9,31.4],['Base',34.2,-4.1],['Coinbase',29.7,9.6],
+    ['Arbitrum',21.3,-11.8],['Hyperliquid',18.6,62.9],['OKX',14.1,-2.2],['BNB Chain',11.8,7.4]
+  ];
+  document.getElementById('ogrid').innerHTML = origins.map(([nm,v,d])=>{
+    const pts = Array.from({length:7},(_,i)=> 20 - Math.random()*14 - (d>0? i*1.2 : -i*.8));
+    const path = pts.map((p,i)=>(i?'L':'M')+(i*(100/6))+' '+Math.max(3,Math.min(23,p))).join(' ');
+    return '<div class="ocard"><div class="nm">'+nm+'</div><div class="vl num">$'+v.toFixed(1)+'M</div>'+
+      '<div class="dl'+(d>0?' up':'')+'">'+(d>0?'+':'−')+Math.abs(d)+'% vs 7d avg</div>'+
+      '<svg class="spark" viewBox="0 0 100 26" preserveAspectRatio="none"><path d="'+path+'" fill="none" stroke="'+(d>0?'#34D399':'#6B6390')+'" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
+  }).join('');
+
+  /* ---------- reveal ---------- */
+  const io = new IntersectionObserver(es=>{
+    es.forEach(e=>{
+      if(!e.isIntersecting) return;
+      e.target.classList.add('in');
+      e.target.querySelectorAll('.fill').forEach(f=>{ f.style.width = f.dataset.w+'%'; });
+      io.unobserve(e.target);
+    });
+  },{threshold:.12});
+  document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+
+  document.querySelectorAll('.seg').forEach(s=>{
+    if(s.id==='rangeSeg') return;
+    s.querySelectorAll('button').forEach(t=>t.addEventListener('click',()=>{
+      s.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+      t.classList.add('on');
+    }));
+  });
+
+  /* ---------- manifest feed ---------- */
+  const sources = [
+    ['Ethereum','Wormhole'],['Ethereum','deBridge'],['Base','Mayan'],['Base','Across'],
+    ['Arbitrum','deBridge'],['BNB Chain','Wormhole'],['Hyperliquid','withdrawal'],
+    ['Binance','withdrawal'],['Coinbase','withdrawal'],['OKX','withdrawal'],
+    ['Bybit','withdrawal'],['Kraken','withdrawal']
+  ];
+  const states = [['settling','Settling'],['held','Held'],['deployed','Deployed'],['deployed','Deployed'],['held','Held'],['out','Re-exported']];
+  const firstUse = ['Swapped to SOL on Jupiter','Deposited to Kamino','Opened perp collateral on Drift','Added liquidity on Meteora','Staked with Jito','No action yet'];
+  const rows = document.getElementById('rows'), fade = rows.querySelector('.fade'), emptyEl = rows.querySelector('.empty');
+  const at = back => { const d=new Date(Date.now()-back*1000); return [d.getUTCHours(),d.getUTCMinutes()].map(n=>String(n).padStart(2,'0')).join(':'); };
+  const dwell = () => { const r=Math.random(); return r<.3?'—':r<.62?Math.ceil(Math.random()*9)+'m':r<.88?Math.ceil(Math.random()*5)+'h':'idle'; };
+  const hash = () => Array.from({length:8},()=> 'abcdef0123456789'[Math.floor(Math.random()*16)]).join('');
+  const addr = () => hash().slice(0,4).toUpperCase()+'…'+hash().slice(0,4);
+
+  function make(back){
+    const [origin,route] = sources[Math.floor(Math.random()*sources.length)];
+    const heavy = Math.random()<.16;
+    const amt = heavy ? 2.2e6+Math.random()*9e6 : 1.05e5+Math.random()*1.6e6;
+    const [cls,label] = states[Math.floor(Math.random()*states.length)];
+    const first = Math.random()<.34;
+    const dw = dwell();
+    const lag = (4+Math.random()*11).toFixed(1);
+    const use = cls==='settling' ? 'Awaiting first action' : firstUse[Math.floor(Math.random()*firstUse.length)];
+    const cex = route==='withdrawal';
+
+    const el = document.createElement('div');
+    el.className = 'entry';
+    el.innerHTML =
+      '<div class="row">'+
+        '<span class="tm">'+at(back)+'</span>'+
+        '<span class="org">'+origin+'</span>'+
+        '<span class="c-rt">'+route+'</span>'+
+        '<span class="amt">'+money(amt)+'</span>'+
+        '<span class="c-to"><span class="tagx'+(first?' first':'')+'">'+(first?'first seen':'returning')+'</span></span>'+
+        '<span class="c-dw">'+dw+'</span>'+
+        '<span><span class="pill s-'+cls+'"><i></i>'+label+'</span></span>'+
+        '<span class="caret">›</span>'+
+      '</div>'+
+      '<div class="trace">'+
+        '<div class="tsteps">'+
+          '<div class="ts"><div class="n">1 · Origin</div><div class="m">'+origin+'</div><div class="d">'+(cex?'withdrawal batch':'0x'+hash()+hash())+'</div></div>'+
+          '<div class="ts"><div class="n">2 · Route</div><div class="m">'+route+'</div><div class="d">'+(cex?'hot wallet '+addr():'msg '+hash())+'</div></div>'+
+          '<div class="ts"><div class="n">3 · Settlement</div><div class="m">Solana slot '+(slot-Math.floor(Math.random()*400)).toLocaleString('en-US')+'</div><div class="d ok">landed in '+lag+'s</div></div>'+
+          '<div class="ts"><div class="n">4 · Recipient</div><div class="m">'+addr()+'</div><div class="d">'+(first?'no prior Solana history':'active since Mar 2025')+'</div></div>'+
+          '<div class="ts"><div class="n">5 · First use</div><div class="m">'+use+'</div><div class="d">'+(dw==='—'?'not yet moved':'after '+dw)+'</div></div>'+
+        '</div>'+
+        '<div class="trace-note">Counted as <code>'+label.toLowerCase()+'</code> · reclassified automatically if the balance leaves within 24h</div>'+
+      '</div>';
+
+    el.querySelector('.row').addEventListener('click',()=>{
+      const wasOpen = el.classList.contains('open');
+      document.querySelectorAll('.entry.open').forEach(x=>x.classList.remove('open'));
+      if(!wasOpen) el.classList.add('open');
+      syncPause();
+    });
+    return el;
+  }
+
+  function syncPause(){
+    const open = !!document.querySelector('.entry.open');
+    rows.classList.toggle('open', open);
+    document.getElementById('pausedLbl').innerHTML = open
+      ? '<span style="color:var(--violet-lt)">Feed paused while a trace is open</span>'
+      : 'Median settlement lag <b class="num" style="color:var(--txt)">8.2s</b>';
+  }
+
+  for(let i=0;i<12;i++) rows.insertBefore(make(i*47+20), fade);
+
+  const countEl = document.getElementById('entryCount');
+  let count = 2481, quiet = false;
+
+  document.getElementById('quietBtn').addEventListener('click',e=>{
+    quiet = !quiet;
+    rows.classList.toggle('quiet', quiet);
+    e.target.classList.toggle('on', quiet);
+    e.target.textContent = quiet ? 'Back to live feed' : 'Preview quiet hours';
+  });
+
+  if(!reduce){
+    setInterval(()=>{
+      if(quiet || document.querySelector('.entry.open')) return;
+      const el = make(0); el.classList.add('new');
+      rows.insertBefore(el, rows.firstChild);
+      while(rows.querySelectorAll('.entry').length > 14) rows.removeChild(rows.querySelectorAll('.entry')[rows.querySelectorAll('.entry').length-1]);
+      countEl.textContent = (++count).toLocaleString('en-US');
+      resetFresh();
+    },3300);
+
+    setInterval(()=>{
+      if(quiet) return;
+      const live = [...rows.querySelectorAll('.entry')].filter(r=>!r.querySelector('.s-out'));
+      if(!live.length) return;
+      const p = live[Math.floor(Math.random()*live.length)].querySelector('.pill');
+      p.className = 'pill s-out';
+      p.innerHTML = '<i></i>Re-exported';
+    },10500);
+  }
+
+  /* ---------- alert rules ---------- */
+  const msgs = {
+    size:'<b>$6.2M</b> arrived from <b>Binance</b> at 14:21 UTC.<br>Recipient: <b>returning wallet</b> · settled in 6.4s<br><span class="g">Still held · 4m dwell</span>',
+    idle:'<b>$2.8M</b> from <b>Wormhole</b> has now been idle <b>34 minutes</b>.<br>Recipient: 8KQ2…4Fda · no outbound action<br><span class="g">Unspent capital</span>',
+    fresh:'<b>First-seen wallet</b> funded with <b>$1.4M</b> from <b>Coinbase</b>.<br>No prior Solana history · settled in 9.1s<br><span class="g">Watching for first use</span>'
+  };
+  const tgMsg = document.getElementById('tgMsg');
+  function renderMsg(){
+    const on = [...document.querySelectorAll('.rule.on')];
+    tgMsg.innerHTML = on.length ? msgs[on[on.length-1].dataset.k]
+      : '<span style="color:var(--txt-3)">No rules active. Turn one on to see the message it sends.</span>';
+  }
+  document.querySelectorAll('.rule').forEach(r=>r.addEventListener('click',()=>{ r.classList.toggle('on'); renderMsg(); }));
+  renderMsg();
+
+  /* ---------- share card download ---------- */
+  document.getElementById('dlCard').addEventListener('click',()=>{
+    const c = document.createElement('canvas'); c.width=1200; c.height=675;
+    const x = c.getContext('2d');
+    x.fillStyle='#0C0718'; x.fillRect(0,0,1200,675);
+    x.fillStyle='#171029'; x.fillRect(64,64,1072,547);
+    x.strokeStyle='rgba(241,237,255,.12)'; x.lineWidth=2; x.strokeRect(64,64,1072,547);
+    x.fillStyle='#7C5CFF'; x.beginPath(); x.roundRect(112,120,34,34,10); x.fill();
+    x.fillStyle='#F1EDFF'; x.font='600 26px Sora, sans-serif'; x.fillText('Manifest',162,146);
+    x.fillStyle='#6B6390'; x.font='400 20px "JetBrains Mono", monospace'; x.fillText('04 Aug 2026',962,146);
+    x.fillStyle='#34D399'; x.font='600 104px "JetBrains Mono", monospace'; x.fillText('$268.4M',112,320);
+    x.fillStyle='#948BB4'; x.font='400 28px "Plus Jakarta Sans", sans-serif';
+    x.fillText('arrived on Solana today and is still here',112,368);
+    x.strokeStyle='rgba(241,237,255,.12)'; x.lineWidth=1;
+    x.beginPath(); x.moveTo(112,430); x.lineTo(1088,430); x.stroke();
+    const stats=[['$412.9M','declared inbound'],['35%','left again'],['$29.6M','still unspent']];
+    stats.forEach(([v,k],i)=>{
+      const px = 112 + i*330;
+      x.fillStyle='#F1EDFF'; x.font='600 40px "JetBrains Mono", monospace'; x.fillText(v,px,500);
+      x.fillStyle='#6B6390'; x.font='400 22px "Plus Jakarta Sans", sans-serif'; x.fillText(k,px,536);
+    });
+    const a=document.createElement('a'); a.download='manifest-2026-08-04.png'; a.href=c.toDataURL('image/png'); a.click();
+  });
+})();
+</script>
+</body>
+</html>
