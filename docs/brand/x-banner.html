@@ -5,68 +5,79 @@
 @font-face{font-family:"JBMono";src:url(data:font/woff2;base64,__MONO__) format("woff2");font-weight:400 700;font-display:block}
 :root{
   --bg:#0C0718; --txt:#F1EDFF; --txt-2:#948BB4; --txt-3:#6B6390;
-  --line-2:rgba(241,237,255,.16);
-  --violet:#7C5CFF; --violet-lt:#A78BFA;
+  --violet:#7C5CFF; --violet-tint:rgba(124,92,255,.34); --rose:#F87189;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#222;font-family:"Jakarta",sans-serif}
 .plate{position:relative;overflow:hidden;background:var(--bg);width:1500px;height:500px;margin-bottom:24px}
 
-/* The aperture opened into a full ring system — the hero portal, drawn rather
-   than blurred. Every stroke is crisp; the only glow is the core, which is the
-   one element the design system lets glow. */
-.rings{position:absolute;left:0;top:0;width:1500px;height:500px}
-.core{position:absolute;left:1180px;top:250px;width:40px;height:40px;margin:-20px 0 0 -20px;
-  border-radius:50%;background:var(--violet);box-shadow:0 0 46px rgba(124,92,255,.55)}
-
 .lock{position:absolute;left:112px;top:62px}
-.eyebrow{font-family:"JBMono",monospace;font-size:16px;font-weight:500;letter-spacing:.30em;
-  text-transform:uppercase;color:var(--txt-3);display:block}
-.word{font-family:"Sora",sans-serif;font-weight:600;font-size:104px;letter-spacing:-.05em;
-  color:var(--txt);line-height:1;display:block;margin-top:20px}
+.eyebrow{display:block;font-family:"JBMono",monospace;font-size:16px;font-weight:500;
+  letter-spacing:.30em;text-transform:uppercase;color:var(--txt-3)}
+.word{display:block;font-family:"Sora",sans-serif;font-weight:600;font-size:104px;
+  letter-spacing:-.05em;color:var(--txt);line-height:1;margin-top:20px}
+/* The only other place the accent appears. A span is an inline box, so this
+   needs display:block or it silently draws nothing. */
 .rule{display:block;width:104px;height:3px;background:var(--violet);margin-top:26px;border-radius:2px}
-.tag{font-family:"Jakarta",sans-serif;font-size:29px;color:var(--txt-2);display:block;
+.tag{display:block;font-family:"Jakarta",sans-serif;font-size:29px;color:var(--txt-2);
   margin-top:22px;letter-spacing:-.008em}
 
-
+.chart{position:absolute;left:0;top:0;width:1500px;height:500px}
+.legend{position:absolute;right:112px;top:236px;display:flex;gap:26px;align-items:center;
+  font-family:"JBMono",monospace;font-size:15px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--txt-3)}
+.legend span{display:flex;align-items:center;gap:9px}
+.legend i{display:block;width:11px;height:11px;border-radius:3px}
 .guide{position:absolute;outline:2px dashed rgba(248,113,137,.9);pointer-events:none}
 </style>
 
-<div class="plate" id="b2">
-  <svg class="rings" viewBox="0 0 1500 500" fill="none">
-    <!-- concentric right-opening arcs, common centre at (1180,250) -->
-    <path d="M1180 188a62 62 0 0 1 0 124"  stroke="#7C5CFF" stroke-opacity=".85" stroke-width="15" stroke-linecap="round"/>
-    <path d="M1180 134a116 116 0 0 1 0 232" stroke="#7C5CFF" stroke-opacity=".58" stroke-width="12" stroke-linecap="round"/>
-    <path d="M1180 76a174 174 0 0 1 0 348"  stroke="#7C5CFF" stroke-opacity=".38" stroke-width="10" stroke-linecap="round"/>
-    <path d="M1180 14a236 236 0 0 1 0 472"  stroke="#7C5CFF" stroke-opacity=".25" stroke-width="8"  stroke-linecap="round"/>
-    <path d="M1180 -52a302 302 0 0 1 0 604" stroke="#7C5CFF" stroke-opacity=".16" stroke-width="6"  stroke-linecap="round"/>
-    <path d="M1180 -122a372 372 0 0 1 0 744" stroke="#7C5CFF" stroke-opacity=".10" stroke-width="5" stroke-linecap="round"/>
-  </svg>
-  <div class="core"></div>
-  <div class="lock">
-    <span class="eyebrow">Solana · port of entry</span>
-    <span class="word">Tare</span>
-    <span class="rule"></span>
-    <span class="tag">Capital arriving on Solana, and whether it stayed.</span>
-  </div>
-</div>
+<div class="plate" id="b3"></div>
+<div class="plate" id="b3g"></div>
 
-<div class="plate" id="b2-guides">
-  <svg class="rings" viewBox="0 0 1500 500" fill="none">
-    <path d="M1180 188a62 62 0 0 1 0 124"  stroke="#7C5CFF" stroke-opacity=".85" stroke-width="15" stroke-linecap="round"/>
-    <path d="M1180 134a116 116 0 0 1 0 232" stroke="#7C5CFF" stroke-opacity=".58" stroke-width="12" stroke-linecap="round"/>
-    <path d="M1180 76a174 174 0 0 1 0 348"  stroke="#7C5CFF" stroke-opacity=".38" stroke-width="10" stroke-linecap="round"/>
-    <path d="M1180 14a236 236 0 0 1 0 472"  stroke="#7C5CFF" stroke-opacity=".25" stroke-width="8"  stroke-linecap="round"/>
-    <path d="M1180 -52a302 302 0 0 1 0 604" stroke="#7C5CFF" stroke-opacity=".16" stroke-width="6"  stroke-linecap="round"/>
-    <path d="M1180 -122a372 372 0 0 1 0 744" stroke="#7C5CFF" stroke-opacity=".10" stroke-width="5" stroke-linecap="round"/>
-  </svg>
-  <div class="core"></div>
+<script>
+// Thirty days of gross against what stayed — the product's own chart, reduced.
+// Fixed rather than random so the banner is reproducible, and deliberately
+// unlabelled: it is the shape of the method, not a claim about a number.
+const DAYS = [
+  [.62,.41],[.71,.48],[.55,.30],[.83,.57],[.66,.28],[.74,-.09],[.58,.36],[.91,.62],
+  [.69,.44],[.77,.51],[.60,.33],[.86,.59],[.72,.46],[.64,-.07],[.80,.55],[.68,.42],
+  [.75,.49],[.57,.31],[.88,.61],[.70,-.11],[.63,.39],[.79,.54],[.66,.43],[.94,.66],
+];
+const X0 = 430, X1 = 1388, BASE = 430, MAXH = 126, MAXNEG = 38;
+const PITCH = (X1 - X0) / DAYS.length;
+const BAR = (PITCH - 11) / 2;
+
+function svg() {
+  const grid = [310, 350, 390].map(y =>
+    `<line x1="${X0}" y1="${y}" x2="${X1}" y2="${y}" stroke="rgba(241,237,255,.045)" stroke-width="1"/>`).join("");
+  const bars = DAYS.map(([g, h], i) => {
+    const x = X0 + i * PITCH;
+    const gh = g * MAXH, hh = Math.abs(h) * (h < 0 ? MAXNEG / .12 * .12 : MAXH);
+    const gross = `<rect x="${x.toFixed(1)}" y="${(BASE - gh).toFixed(1)}" width="${BAR.toFixed(1)}" height="${gh.toFixed(1)}" rx="2" fill="var(--violet-tint)"/>`;
+    const held = h >= 0
+      ? `<rect x="${(x + BAR + 3).toFixed(1)}" y="${(BASE - hh).toFixed(1)}" width="${BAR.toFixed(1)}" height="${hh.toFixed(1)}" rx="2" fill="var(--violet)"/>`
+      // Below the line: more value left than arrived. Rose means exactly that.
+      : `<rect x="${(x + BAR + 3).toFixed(1)}" y="${BASE}" width="${BAR.toFixed(1)}" height="${Math.min(Math.abs(h) * MAXH * 3.2, MAXNEG).toFixed(1)}" rx="2" fill="var(--rose)"/>`;
+    return gross + held;
+  }).join("");
+  return `<svg class="chart" viewBox="0 0 1500 500" fill="none">${grid}${bars}
+    <line x1="${X0}" y1="${BASE}" x2="${X1}" y2="${BASE}" stroke="rgba(241,237,255,.16)" stroke-width="1.5"/></svg>`;
+}
+
+const BODY = svg() + `
   <div class="lock">
     <span class="eyebrow">Solana · port of entry</span>
     <span class="word">Tare</span>
     <span class="rule"></span>
     <span class="tag">Capital arriving on Solana, and whether it stayed.</span>
   </div>
-  <div class="guide" style="left:50px;top:325px;width:350px;height:350px;border-radius:50%"></div>
-  <div class="guide" style="left:0;top:60px;width:1500px;height:380px"></div>
-</div>
+  <div class="legend">
+    <span><i style="background:var(--violet-tint)"></i>gross inbound</span>
+    <span><i style="background:var(--violet)"></i>still here</span>
+  </div>`;
+
+document.getElementById("b3").innerHTML = BODY;
+document.getElementById("b3g").innerHTML = BODY +
+  `<div class="guide" style="left:51px;top:333px;width:334px;height:334px;border-radius:50%"></div>
+   <div class="guide" style="left:0;top:60px;width:1500px;height:380px"></div>`;
+</script>

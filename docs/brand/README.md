@@ -2,7 +2,7 @@
 
 Regenerate: the `__SORA__` / `__JAKARTA__` / `__MONO__` placeholders take
 base64 woff2 faces. Screenshot `#avatar` and `#avatar-alt` from `x-assets.html`
-and `#b2` from `x-banner.html`, at `deviceScaleFactor: 1`. The `-guides` plates
+and `#b3` from `x-banner.html`, at `deviceScaleFactor: 1`. The `-guides` plates
 draw X's avatar overlap and safe band so the layout is checked rather than
 assumed.
 
@@ -39,15 +39,26 @@ already the mark, and repeating it puts two marks a centimetre apart.
 
 ## What makes it read as premium rather than generic
 
-Blur was doing the damage. A 70px halo behind a 26%-opacity mark reads as a
-watermark — the shape looks approximate, and approximate is the opposite of an
-instrument. The ring system replaces it: six concentric right-opening arcs on
-one centre, every stroke crisp, weight and opacity stepping down outward, the
-whole thing bleeding off three edges so it continues rather than stops. The only
-glow left is on the core, which is the one element §5 permits to glow.
+Three passes got here, and each one removed something.
 
-The rest is hierarchy. An eyebrow above the wordmark gives the block somewhere
-to start; a short violet rule gives the type a floor and is the only other place
-the accent appears. `taredata.com` was cut — it fell across the rings and turned
-to mush at the size X actually renders this, and X shows the website under the
-banner anyway. Removing beat relocating.
+**Blur went first.** A 70px halo behind a 26%-opacity mark reads as a watermark.
+The shape looks approximate, and approximate is the opposite of an instrument.
+
+**Then the rings went.** They were crisp by that point, but still decoration — a
+shape that could belong to any company. What replaced them is the product's own
+chart: gross against what stayed, twenty-four days on a hairline baseline, the
+three outflow days dropping below it in rose. No competitor reporting gross
+volume can put that on a banner, which is the whole argument for using it. It is
+drawn unlabelled and carries no figures — it is the shape of the method, not a
+claim about a number.
+
+**What is left is alignment.** Left and right margins are both 112px. The
+legend's right edge sits on the chart's right edge. The eyebrow gives the block
+somewhere to start and the short violet rule gives the type a floor; those two
+are the only places the accent appears, and rose appears only where it means
+what it always means. `taredata.com` was cut — it turned to mush at the size X
+renders this, and X shows the website under the banner anyway.
+
+One relationship worth keeping if this is redrawn: the chart starts at x=430,
+which is where X's avatar circle ends. The empty bottom-left is not empty on a
+real profile.
