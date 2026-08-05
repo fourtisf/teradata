@@ -18,7 +18,7 @@ strip reads `Simulated`, a preview banner says so on every page, and
 | P1 — Solana ingest | not started, see *What P1 needs* below |
 | P2–P3 — correlation, re-export | not started |
 | P4 — product surface | done ahead of schedule (range, chart, traces, coverage, status) |
-| P5 — retention | daily card done as the OG generator; alerts not started |
+| P5 — retention | daily card done as the OG generator; alert delivery to Telegram and X done, refused until data is real |
 | P6 — public pages | pages, sitemap, JSON-LD and OG done; REST/WS API not started |
 
 ### Routes
@@ -30,6 +30,7 @@ strip reads `Simulated`, a preview banner says so on every page, and
 /route/[bridge]         §8, ISR 1h, one per bridge
 /status                 indexer state, unattributed share, changelog
 /api/waitlist           POST { email }, forwards to WAITLIST_WEBHOOK_URL
+/api/alerts/dispatch    POST an alert event, behind ALERTS_DISPATCH_SECRET
 /opengraph-image        the daily card, and one per public page
 /sitemap.xml /robots.txt
 ```
@@ -111,6 +112,35 @@ spend the credibility the whole product rests on, and it is not recoverable by
 fixing the data afterwards. Setting `DATA_SOURCE=live` turns both on with no
 other change.
 
+## Alerts
+
+`src/lib/alerts/` delivers movements to Telegram and X. Four kinds — `arrival`,
+`reexport`, `idle`, `first_seen` — and the ingest worker in P1 POSTs them to
+`/api/alerts/dispatch` behind a shared secret.
+
+**Nothing is delivered while `DATA_SOURCE=sim`.** The dispatcher refuses before
+it formats anything. A page can carry a "simulated" label a reader can see; a
+Telegram message is forwarded and a tweet is screenshotted, both with the label
+gone. `ALERTS_ALLOW_SIMULATED=true` unlocks delivery for testing into a private
+channel, and every message is then prefixed `[SIMULATED]` at format time, where
+no transport can drop it.
+
+Thresholds are per channel because the constraints are not the same. Telegram is
+a subscriber feed and can carry every qualifying movement. X's free tier allows
+**500 posts a month**, so its thresholds start an order of magnitude higher and
+it carries a 30-minute cooldown on top — otherwise the post budget, rather than
+editorial judgement, decides what gets published.
+
+Preview the copy without credentials and without sending:
+
+```bash
+npx tsx --tsconfig tsconfig.json scripts/alert-preview.mts
+```
+
+Dedupe and cooldown are in-process, which is right for exactly one PM2 instance
+and wrong for two — §2 already specifies Redis for the pub/sub layer and this
+moves there with it. `ecosystem.config.cjs` runs one instance for that reason.
+
 ## What is verified
 
 Checked against a real browser at 1440px, 920px and 360px:
@@ -127,6 +157,10 @@ Checked against a real browser at 1440px, 920px and 360px:
 - The 30-day series sums exactly to the 30-day headline, and its last day equals
   the 24-hour headline, so the chart, the hero and `/day/<today>` agree.
 - No console errors, no failed requests.
+- Alerts: the simulated-data guard refuses both channels; thresholds route $5M
+  to Telegram only and $50M to both; a repeat of the same entry is deduped; X
+  cools down for 30 minutes while Telegram does not. Checked against stubbed
+  transports, so the branch decisions are exercised rather than the network.
 
 ## Constraints that are not negotiable
 
