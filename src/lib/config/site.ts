@@ -1,9 +1,17 @@
 /**
  * Everything about the site that is not data.
  *
- * Links default to `null` rather than to a plausible-looking handle. A dead
- * social link on a product whose pitch is transparency costs more than a
- * missing one, so an unset value hides the link instead of shipping a guess.
+ * A dead social link on a product whose pitch is transparency costs more than a
+ * missing one, so anything unset renders nothing rather than a guess.
+ *
+ * X and Telegram are the exception, and they earned it: both accounts exist and
+ * both have had a message delivered through them, so they are facts rather than
+ * plausible-looking handles. They live here with the brand and the domain for
+ * the reason §11 gives for the logo — a value defined in one place cannot drift
+ * between surfaces. The env vars still override, but the failure they used to
+ * allow is gone: a build that shipped `NEXT_PUBLIC_X_URL` without the trailing
+ * underscore produced a link to an account that does not exist, and nothing
+ * caught it because a wrong link and a right one look identical to a build.
  */
 
 export const SITE_NAME = "Tare";
@@ -14,14 +22,18 @@ export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://taredata.c
   "",
 );
 
-function link(value: string | undefined): string | null {
+function link(value: string | undefined, fallback: string | null = null): string | null {
   const trimmed = value?.trim();
-  return trimmed ? trimmed : null;
+  return trimmed ? trimmed : fallback;
 }
 
+/** The handles, verified by having posted through them. */
+export const X_HANDLE = "TareData_";
+export const TELEGRAM_HANDLE = "taredata";
+
 export const SOCIAL = {
-  x: link(process.env.NEXT_PUBLIC_X_URL),
-  telegram: link(process.env.NEXT_PUBLIC_TELEGRAM_URL),
+  x: link(process.env.NEXT_PUBLIC_X_URL, `https://x.com/${X_HANDLE}`),
+  telegram: link(process.env.NEXT_PUBLIC_TELEGRAM_URL, `https://t.me/${TELEGRAM_HANDLE}`),
   github: link(process.env.NEXT_PUBLIC_GITHUB_URL),
   email: link(process.env.NEXT_PUBLIC_CONTACT_EMAIL),
 } as const;

@@ -2143,6 +2143,23 @@ footer {
   color: var(--txt);
 }
 
+/* Channel links under the alerts heading. Body-weight rather than a button
+   pair: two buttons here would compete with the range selector and the
+   waitlist CTA for the one primary action the page is allowed. */
+.follow {
+  margin-top: 10px;
+}
+
+.follow a {
+  color: var(--txt);
+  border-bottom: 1px solid var(--line-2);
+  transition: border-color 0.22s ease;
+}
+
+.follow a:hover {
+  border-bottom-color: var(--txt-3);
+}
+
 /* ----------------------------------------------------------------- faq ---- */
 
 .faq {
