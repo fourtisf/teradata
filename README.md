@@ -236,7 +236,7 @@ blocks, and the order to acquire them in. The short version:
   free tier works because ingest is real-time — there is no historical lookup
   to do — and one request covers every tracked asset, so the monthly call count
   depends on the cache window alone. `src/lib/prices/` and §11 have the detail.
-- **ClickHouse**, plus Postgres and Redis from P2. Redis also retires the
+- **Postgres and Redis**, both on the VPS. Redis also retires the
   in-process alert dedupe and the one-instance PM2 constraint.
 - **Origin-chain reads** for the five bridges in §3.1 — the bridges' own APIs to
   start, EVM log subscriptions where volume justifies owning the read.

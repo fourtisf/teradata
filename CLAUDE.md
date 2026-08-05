@@ -409,6 +409,33 @@ Paste this to start:
   much before publishing a figure we have to defend.
 ### Closed
 
+- **Flow store — Postgres, not ClickHouse.** §2 says the stack is decided and
+  not to be re-litigated mid-build, so this is a change against the spec and it
+  needs a reason rather than a preference.
+
+  Two installs failed on the VPS. `curl clickhouse.com | sh` left config files
+  the `clickhouse` user could not read — the box has a restrictive umask and
+  that path does not set ownership. The APT package then collided with the init
+  script the first attempt left behind: systemd's unit expects a foreground
+  process, the SysV script daemonises, and systemd killed the server it had just
+  started. A third attempt after a full purge would probably have worked. It was
+  not worth the hour.
+
+  It costs nothing today. A $100K floor across five bridges and seven venues is
+  roughly 1,000–2,000 arrivals a day — about 550k rows a year, where Postgres is
+  comfortable for years and §8's aggregations are indexed range scans over one
+  month rather than full-table sums. Postgres was already required for §4's app
+  tables, so this removes a moving part rather than adding one. One thing got
+  genuinely simpler: §3.4's mutating rows are an `UPDATE` instead of
+  `ReplacingMergeTree`, which needed `FINAL` or `argMax` on every read to say the
+  same thing and silently returned duplicates when you forgot.
+
+  What we gave up is headroom. The column store starts winning in the tens of
+  millions of rows, which arrives if the size floor drops well below $100K or a
+  second destination chain is added — both deliberate decisions rather than
+  drift, and either is the signal to revisit. `deploy/clickhouse/schema.sql` is
+  kept for that day.
+
 - **Price source — CoinGecko, free Demo plan.** §4 gives `arrivals` both
   `amount_native` and `amount_usd` and names nothing to convert between them.
   Converting at read time was never an option: it makes every historical figure

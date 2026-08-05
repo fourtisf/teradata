@@ -143,17 +143,18 @@ second implementation, no caller changes.
 
 ## 4. Storage
 
-Self-hosting all three on the existing VPS is reasonable, given the ingest
-workers are already going there per §2.
+Both on the existing VPS — 7.8 GB RAM, 2 vCPU, 96 GB disk — since the ingest
+workers are going there anyway per §2. Nothing to buy.
 
 | Variable | Notes |
 |---|---|
-| `CLICKHOUSE_URL` `CLICKHOUSE_USER` `CLICKHOUSE_PASSWORD` | wants 4GB RAM minimum, more once `arrivals` grows. ClickHouse Cloud if the VPS is small. |
-| `POSTGRES_URL` | small — accounts, subscriptions, alert rules. Neon or Supabase free tier is plenty. |
+| `POSTGRES_URL` | flow store *and* app tables. `deploy/postgres/schema.sql` |
 | `REDIS_URL` | the pending-arrival buffer (§3.1) and the pub/sub the websocket reads. Tiny. |
 
-**What I need from you:** the VPS RAM and disk. If it is a 4GB box running the
-Next.js app as well, ClickHouse goes elsewhere.
+**Not ClickHouse**, despite §2. Two installs failed on this box and at ~550k
+rows a year Postgres is comfortable for years, so the column store buys nothing
+yet. `docs/DATASTORES.md` has the full reasoning and §11 records the decision;
+`deploy/clickhouse/schema.sql` is kept for the day volume justifies revisiting.
 
 Redis also fixes a known limitation: alert dedupe and cooldown are in-process
 today, which is why `ecosystem.config.cjs` pins one PM2 instance. Two instances
@@ -192,7 +193,7 @@ Alerts stay refused until `DATA_SOURCE=live` regardless of these being set.
 
 1. **Helius gRPC + RPC.** Nothing else is useful without it. P1 ships on this alone.
 2. **CoinGecko free Demo key.** P1 cannot write a USD figure without it.
-3. **ClickHouse.** Somewhere to put the rows.
+3. **Postgres.** Somewhere to put the rows. `apt install postgresql`, free.
 4. **Bridge APIs** (free) → P2 correlation starts producing matched arrivals.
 5. **Dune** → the entity seed set, and CEX flow joins the headline figure.
 6. **EVM RPC** → replaces the bridge APIs where the volume justifies owning the
