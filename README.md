@@ -131,11 +131,38 @@ a subscriber feed and can carry every qualifying movement. X's free tier allows
 it carries a 30-minute cooldown on top — otherwise the post budget, rather than
 editorial judgement, decides what gets published.
 
+### The copy varies
+
+A feed that posts one sentence with a different number every time reads as a
+bot, and a bot is not worth following. `src/lib/alerts/copy.ts` holds fifteen
+phrasings across the four kinds. Each carries a condition, so only the ones that
+are true of the event are offered — `partial-exit` needs a partial exit,
+`slow-settle` needs a bridge arrival above the median lag, `unspent-large` needs
+size. One is then chosen by hashing the entry id.
+
+Deterministic rather than random, for two reasons: a retry after a transport
+error produces the identical message rather than a second different one, and a
+reviewer can reproduce exactly what went out.
+
+The register is a desk note, not a marketing post — declarative, no exclamation,
+no hype adjective, and the product's own vocabulary throughout, so a reader
+learns *arrived, settled, held, re-exported, dwell, first use* once and then
+sees the same words on the site. §1 binds the copy the same way it binds the
+schema: flow and the wallet's verifiable properties, never a firm. The
+dispatcher also refuses a `first_seen` event whose entry marks the recipient as
+returning, because every phrasing of that alert opens by asserting the wallet is
+new.
+
 Preview the copy without credentials and without sending:
 
 ```bash
-npx tsx --tsconfig tsconfig.json scripts/alert-preview.mts
+npx tsx --tsconfig tsconfig.json scripts/alert-preview.mts          # a spread
+npx tsx --tsconfig tsconfig.json scripts/alert-preview.mts --all    # every variant
 ```
+
+`--all` is the one to run after editing `copy.ts`: it renders all fifteen on
+both channels and exits non-zero if any X body would break 280 once a t.co link
+is added.
 
 Dedupe and cooldown are in-process, which is right for exactly one PM2 instance
 and wrong for two — §2 already specifies Redis for the pub/sub layer and this

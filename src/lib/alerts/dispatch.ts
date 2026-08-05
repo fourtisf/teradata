@@ -70,6 +70,19 @@ export async function dispatchAlert(
     return result;
   }
 
+  // A first-seen alert asserts the recipient has no prior Solana history. Every
+  // phrasing of it says so in the first line. If the entry does not support the
+  // claim, it is not ours to publish — §1 is only worth anything if it holds on
+  // the small statements too.
+  if (event.kind === "first_seen" && !event.entry.recipient.firstSeen) {
+    result.delivered = (["telegram", "x"] as Channel[]).map((channel) => ({
+      channel,
+      ok: false,
+      reason: "refused: first_seen event on a recipient the entry marks as returning",
+    }));
+    return result;
+  }
+
   sweep(now);
   const dedupeKey = `${event.kind}:${event.entry.id}`;
   if (fired.has(dedupeKey)) {

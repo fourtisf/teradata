@@ -1,20 +1,20 @@
 /**
- * Alert copy.
+ * Alert copy assembly.
  *
- * The house rule (§1) applies here more than anywhere: an alert is pushed,
- * screenshotted and quoted. It describes measured flow and the wallet's
- * verifiable properties — first seen or returning, funded from which venue,
- * idle for how long — and never who moved the money. Venue and bridge names are
- * fine; they are the port, not the firm.
+ * Builds the context every template reads from, picks a variant (see copy.ts),
+ * and wraps it in the per-channel furniture. The house rule (§1) is enforced by
+ * what this file makes available: there is no field here that names a firm, so
+ * no template can reach for one.
  */
 
-import { dwell, money, seconds, shortAddress } from "@/lib/format";
+import { dwell as formatDwell, money, seconds, shortAddress, utcTime } from "@/lib/format";
 import { SITE_URL } from "@/lib/config/site";
 import { ALLOW_SIMULATED } from "@/lib/alerts/config";
+import { pickVariant, type CopyContext } from "@/lib/alerts/copy";
 import type { AlertEvent } from "@/lib/alerts/types";
 import type { DataSource } from "@/lib/data/types";
 
-/** Violet arrives, green stays, rose leaves — the same three meanings as §5. */
+/** Violet arrives, green stays, rose leaves — the three meanings of §5. */
 const MARK: Record<AlertEvent["kind"], string> = {
   arrival: "🟣",
   reexport: "🔴",
@@ -29,22 +29,66 @@ const HEADLINE: Record<AlertEvent["kind"], string> = {
   first_seen: "First-seen wallet",
 };
 
-function wallet(event: AlertEvent): string {
-  return event.entry.recipient.firstSeen ? "first-seen wallet" : "returning wallet";
+/**
+ * "a Binance withdrawal" but "an OKX withdrawal". Venue names are read as words
+ * when they are words and as letters when they are acronyms, so the rule is the
+ * spoken sound, not the letter: a leading vowel letter takes "an", and so does a
+ * consonant whose letter-name opens on a vowel (F, H, L, M, N, R, S, X) when it
+ * starts an all-caps run.
+ */
+const YOO_INITIAL = new Set(["Uniswap", "Unichain", "Union", "Universal"]);
+
+function article(name: string): "a" | "an" {
+  if (YOO_INITIAL.has(name)) return "a";
+  if (/^[AEIOU]/.test(name)) return "an";
+  return /^[FHLMNRSX](?![a-z])/.test(name) ? "an" : "a";
 }
 
-function source(event: AlertEvent): string {
-  const { origin, route, kind } = event.entry;
-  return kind === "exchange" ? `${origin} withdrawal` : `${origin} via ${route}`;
+/** "4 hours", "34 minutes", "under a minute" — reads inside a sentence. */
+function humanDuration(ms: number): string {
+  const minutes = Math.round(ms / 60_000);
+  if (minutes < 1) return "under a minute";
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"}`;
+  const days = Math.round(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"}`;
 }
 
-function permalink(event: AlertEvent): string {
-  return `${SITE_URL}/day/${event.entry.solanaTs.slice(0, 10)}`;
+function buildContext(event: AlertEvent, now: number): CopyContext {
+  const e = event.entry;
+  const isBridge = e.kind === "bridge";
+  const partial = event.kind === "reexport" && event.movedUsd < e.amountUsd * 0.995;
+  const share = e.amountUsd > 0 ? event.movedUsd / e.amountUsd : 0;
+
+  return {
+    amount: money(event.movedUsd),
+    arrived: money(e.amountUsd),
+    remaining: money(Math.max(0, e.amountUsd - event.movedUsd)),
+    sharePct: `${Math.round(share * 100)}%`,
+    source: isBridge ? `${e.origin} via ${e.route}` : `${article(e.origin)} ${e.origin} withdrawal`,
+    origin: e.origin,
+    originArticle: article(e.origin),
+    route: e.route,
+    isBridge,
+    wallet: e.recipient.firstSeen ? "a wallet with no prior Solana history" : "a returning wallet",
+    firstSeen: e.recipient.firstSeen,
+    settle: seconds(e.lagMs),
+    fastSettle: e.lagMs < 5_000,
+    slowSettle: e.lagMs > 12_000,
+    dwell: event.detail ?? humanDuration(e.dwellMs ?? 0),
+    arrivedAt: `${utcTime(e.solanaTs)} UTC`,
+    onChain: humanDuration(Math.max(0, now - Date.parse(e.solanaTs))),
+    partial,
+    large: event.movedUsd >= 25_000_000,
+    confidence: e.confidence,
+    link: `${SITE_URL}/day/${e.solanaTs.slice(0, 10)}`,
+  };
 }
 
 /**
- * The prefix is added here rather than in a transport so that no delivery path
- * can post an unlabelled simulated figure, however it is called.
+ * Applied here rather than in a transport, so no delivery path can post an
+ * unlabelled simulated figure however it is reached.
  */
 function prefix(dataSource: DataSource): string {
   return dataSource === "sim" && ALLOW_SIMULATED ? "[SIMULATED] " : "";
@@ -54,64 +98,59 @@ function escapeHtml(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+export interface FormatOptions {
+  now?: () => number;
+}
+
 /** Telegram, HTML parse mode. Room to be complete. */
-export function telegramMessage(event: AlertEvent, dataSource: DataSource): string {
+export function telegramMessage(
+  event: AlertEvent,
+  dataSource: DataSource,
+  options: FormatOptions = {},
+): string {
+  const now = (options.now ?? Date.now)();
+  const context = buildContext(event, now);
+  const variant = pickVariant(event.kind, event.entry.id, context);
   const e = event.entry;
-  const lines: string[] = [
+
+  return [
     `${MARK[event.kind]} <b>${escapeHtml(prefix(dataSource) + HEADLINE[event.kind])}</b>`,
     "",
-  ];
-
-  if (event.kind === "reexport") {
-    lines.push(
-      `<b>${money(event.movedUsd)}</b> that arrived from ${escapeHtml(source(event))} has left the chain.`,
-    );
-    if (event.detail) lines.push(`Out: ${escapeHtml(event.detail)}`);
-  } else if (event.kind === "idle") {
-    lines.push(
-      `<b>${money(event.movedUsd)}</b> from ${escapeHtml(source(event))} has not moved for ${escapeHtml(event.detail ?? dwell(e.dwellMs))}.`,
-    );
-  } else {
-    lines.push(`<b>${money(event.movedUsd)}</b> arrived from ${escapeHtml(source(event))}.`);
-  }
-
-  lines.push(
+    ...variant.telegram(context),
     "",
-    `Recipient: ${wallet(event)} · <code>${escapeHtml(shortAddress(e.recipient.address))}</code>`,
-    `Settled in ${seconds(e.lagMs)} · confidence <code>${e.confidence}</code>`,
+    `Recipient: ${context.wallet} · <code>${escapeHtml(shortAddress(e.recipient.address))}</code>`,
+    `Settled in ${context.settle} · confidence <code>${e.confidence}</code>`,
     "",
-    permalink(event),
-  );
-  return lines.join("\n");
+    context.link,
+  ].join("\n");
 }
 
 /**
- * X, 280 characters. Built shortest-first and only padded while it fits, so it
- * is never truncated mid-word or mid-figure.
+ * X, 280 characters. A t.co link always costs 23 whatever its length, so the
+ * body budget is 280 − 23 − 1. Variants are written to fit; if one ever does
+ * not, this trims at a sentence boundary rather than mid-figure.
  */
-export function xMessage(event: AlertEvent, dataSource: DataSource): string {
-  const e = event.entry;
-  const link = permalink(event);
-  // A t.co link always counts as 23 characters however long the URL is.
+export function xMessage(
+  event: AlertEvent,
+  dataSource: DataSource,
+  options: FormatOptions = {},
+): string {
+  const now = (options.now ?? Date.now)();
+  const context = buildContext(event, now);
+  const variant = pickVariant(event.kind, event.entry.id, context);
   const budget = 280 - 23 - 1;
 
-  const head =
-    event.kind === "reexport"
-      ? `${prefix(dataSource)}${money(event.movedUsd)} that arrived from ${source(event)} has left Solana again.`
-      : event.kind === "idle"
-        ? `${prefix(dataSource)}${money(event.movedUsd)} from ${source(event)} landed and has not moved for ${event.detail ?? dwell(e.dwellMs)}.`
-        : `${prefix(dataSource)}${money(event.movedUsd)} arrived on Solana from ${source(event)}.`;
-
-  const extras = [
-    `Recipient: ${wallet(event)}.`,
-    `Settled in ${seconds(e.lagMs)}.`,
-    event.kind === "reexport" && event.detail ? `Out via ${event.detail}.` : "",
-  ].filter(Boolean);
-
-  let text = head;
-  for (const extra of extras) {
-    if (text.length + 1 + extra.length > budget) break;
-    text += ` ${extra}`;
+  let body = prefix(dataSource) + variant.x(context);
+  if (body.length > budget) {
+    const sentences = body.split(/(?<=\.) /);
+    body = "";
+    for (const sentence of sentences) {
+      if ((body ? body.length + 1 : 0) + sentence.length > budget) break;
+      body = body ? `${body} ${sentence}` : sentence;
+    }
   }
-  return `${text}\n${link}`;
+  return `${body}\n${context.link}`;
 }
+
+/** Exposed so the preview script can render every variant, not just the picked one. */
+export { buildContext, MARK, HEADLINE };
