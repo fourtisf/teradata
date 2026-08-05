@@ -16,6 +16,8 @@ import {
 import { telegramMessage, xMessage } from "@/lib/alerts/format";
 import { sendTelegram, telegramConfigured } from "@/lib/alerts/telegram";
 import { sendX, xConfigured } from "@/lib/alerts/x";
+import { checkBudget } from "@/lib/social/budget";
+import { getLedger } from "@/lib/social/ledger";
 import type { AlertEvent, Channel, DeliveryResult, DispatchResult } from "@/lib/alerts/types";
 import type { DataSource } from "@/lib/data/types";
 
@@ -101,6 +103,7 @@ export async function dispatchAlert(
   }
 
   const jobs: Array<Promise<DeliveryResult>> = [];
+  const ledger = getLedger();
 
   const skip = (channel: Channel, reason: string) =>
     jobs.push(Promise.resolve({ channel, ok: false, reason }));
@@ -116,6 +119,15 @@ export async function dispatchAlert(
       skip(channel, veto);
       continue;
     }
+    // X's monthly allowance, counted across both halves of the social layer.
+    // Alerts stop at the reserve so the scheduled recaps still have room —
+    // a movement not announced is one gap, a month of missing recaps is the
+    // account going quiet.
+    const budget = await checkBudget(ledger, channel, "alert", now);
+    if (!budget.ok) {
+      skip(channel, budget.reason ?? "over budget");
+      continue;
+    }
     const text =
       channel === "telegram" ? telegramMessage(event, dataSource) : xMessage(event, dataSource);
     if (dryRun) {
@@ -123,7 +135,21 @@ export async function dispatchAlert(
       continue;
     }
     lastSent.set(channel, now);
-    jobs.push(channel === "telegram" ? sendTelegram(text) : sendX(text));
+    const key = `alert:${event.kind}:${event.entry.id}`;
+    jobs.push(
+      (channel === "telegram" ? sendTelegram(text) : sendX(text)).then(async (sent) => {
+        await ledger.record({
+          key,
+          channel,
+          purpose: "alert",
+          ok: sent.ok,
+          id: sent.id,
+          reason: sent.reason,
+          at: new Date(now).toISOString(),
+        });
+        return sent;
+      }),
+    );
   }
 
   result.delivered = await Promise.all(jobs);

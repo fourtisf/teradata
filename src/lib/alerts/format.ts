@@ -119,14 +119,42 @@ function buildContext(event: AlertEvent, now: number): CopyContext {
 
 /**
  * Applied here rather than in a transport, so no delivery path can post an
- * unlabelled simulated figure however it is reached.
+ * unlabelled simulated figure however it is reached. The scheduled poster in
+ * `src/lib/social/` imports this one rather than writing its own — a second
+ * copy of the guard is a second thing that can be forgotten.
  */
-function prefix(dataSource: DataSource): string {
+export function simulatedPrefix(dataSource: DataSource): string {
   return dataSource === "sim" && ALLOW_SIMULATED ? "[SIMULATED] " : "";
 }
 
-function escapeHtml(value: string): string {
+export function escapeHtml(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/**
+ * What an X body may occupy before the link.
+ *
+ * A t.co link always costs 23 characters whatever its length, and the newline
+ * before it costs one.
+ */
+export const X_BODY_BUDGET = 280 - 23 - 1;
+
+/**
+ * Trims to the budget at a sentence boundary rather than mid-figure.
+ *
+ * Every variant is written to fit and `scripts/alert-preview.mts --all` and
+ * `scripts/social-preview.mts` both fail the build if one does not. This is the
+ * floor under that, not the mechanism relied on.
+ */
+export function fitForX(body: string): string {
+  if (body.length <= X_BODY_BUDGET) return body;
+  const sentences = body.split(/(?<=\.) /);
+  let out = "";
+  for (const sentence of sentences) {
+    if ((out ? out.length + 1 : 0) + sentence.length > X_BODY_BUDGET) break;
+    out = out ? `${out} ${sentence}` : sentence;
+  }
+  return out;
 }
 
 export interface FormatOptions {
@@ -151,7 +179,7 @@ export function telegramMessage(
   const title = variant.title?.(context) ?? HEADLINE[event.kind];
 
   return [
-    `${MARK[event.kind]} <b>${escapeHtml(prefix(dataSource) + title)}</b>`,
+    `${MARK[event.kind]} <b>${escapeHtml(simulatedPrefix(dataSource) + title)}</b>`,
     "",
     ...variant.telegram(context),
     "",
@@ -175,17 +203,7 @@ export function xMessage(
   const now = (options.now ?? Date.now)();
   const context = buildContext(event, now);
   const variant = pickVariant(event.kind, event.entry.id, context);
-  const budget = 280 - 23 - 1;
-
-  let body = prefix(dataSource) + variant.x(context);
-  if (body.length > budget) {
-    const sentences = body.split(/(?<=\.) /);
-    body = "";
-    for (const sentence of sentences) {
-      if ((body ? body.length + 1 : 0) + sentence.length > budget) break;
-      body = body ? `${body} ${sentence}` : sentence;
-    }
-  }
+  const body = fitForX(simulatedPrefix(dataSource) + variant.x(context));
   return `${body}\n${context.link}`;
 }
 

@@ -68,5 +68,32 @@ export const ALLOW_SIMULATED = process.env.ALERTS_ALLOW_SIMULATED === "true";
 /** Shared secret the P1 ingest worker presents when POSTing events in. */
 export const DISPATCH_SECRET = process.env.ALERTS_DISPATCH_SECRET?.trim() || null;
 
-/** Documented, not enforced here — the number to watch when tuning thresholds. */
-export const X_MONTHLY_BUDGET = 500;
+/**
+ * X's free tier: 500 posts per calendar month, hard.
+ *
+ * This used to be documented and unenforced, which was survivable while nothing
+ * published without a person starting it. It is not survivable now that the
+ * scheduler in `src/lib/social/` posts unattended — an allowance spent by the
+ * 20th means the feed goes silent for eleven days, and the first sign of it is
+ * a 429 during the exact event worth posting about. `social/budget.ts` counts
+ * against the durable ledger and refuses before the API does.
+ */
+export const X_MONTHLY_BUDGET = num(process.env.X_MONTHLY_BUDGET, 500);
+
+/**
+ * Held back for scheduled posts.
+ *
+ * Thirty-one dailies and five weeklies is thirty-six, and the reserve is a
+ * little over that. Alerts are the elastic half — there can be five in a day or
+ * none — so they are the half that stops first. A recap that skips because a
+ * busy Tuesday ate the month is a gap in the record; an alert that skips is one
+ * movement not announced.
+ */
+export const X_SCHEDULED_RESERVE = num(process.env.ALERT_X_SCHEDULED_RESERVE, 60);
+
+/**
+ * Never spent by either half. The cap is enforced by X as a 429, and hitting it
+ * turns every subsequent post into a failed one; stopping short leaves room to
+ * notice.
+ */
+export const X_SAFETY_MARGIN = num(process.env.ALERT_X_SAFETY_MARGIN, 20);

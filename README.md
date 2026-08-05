@@ -18,7 +18,7 @@ strip reads `Simulated`, a preview banner says so on every page, and
 | P1 — Solana ingest | not started, see *What P1 needs* below |
 | P2–P3 — correlation, re-export | not started |
 | P4 — product surface | done ahead of schedule (range, chart, traces, coverage, status) |
-| P5 — retention | daily card done as the OG generator; alert delivery to Telegram and X done, refused until data is real |
+| P5 — retention | daily card done as the OG generator; alert delivery and the scheduled poster done, both refused until data is real |
 | P6 — public pages | pages, sitemap, JSON-LD and OG done; REST/WS API not started |
 
 ### Routes
@@ -47,6 +47,13 @@ npm run dev            # http://localhost:3000
 npm run build          # production build
 npm start              # serve the production build
 npm run typecheck      # tsc --noEmit
+```
+
+```bash
+npm run social         # the scheduled poster (see below); PM2 runs this
+npm run social:check   # the scheduler's tests — clock, ledger, budget, guard
+npm run social:preview # every scheduled post, rendered, nothing sent
+npm run alerts:preview # every alert variant, rendered, nothing sent
 ```
 
 Deploys to Vercel with no configuration. `DATA_SOURCE` defaults to `sim`, so a
@@ -189,6 +196,121 @@ is added.
 Dedupe and cooldown are in-process, which is right for exactly one PM2 instance
 and wrong for two — §2 already specifies Redis for the pub/sub layer and this
 moves there with it. `ecosystem.config.cjs` runs one instance for that reason.
+
+## The scheduled poster
+
+Alerts are reactive: something moves, the P1 ingest worker hands it over, a
+message goes out. That path publishes nothing on a quiet day and nothing at all
+until P1 exists, which would leave both accounts empty. `src/lib/social/` is the
+other half — it fires on a clock, from figures the site already holds.
+
+```bash
+npm run social                 # the worker; the tare-social PM2 process
+npm run social -- --once       # one tick and exit, for a system cron instead
+npm run social -- --dry-run    # compose and decide, send nothing
+npm run social -- --once --dry-run --at 2026-08-07T00:06:00Z
+```
+
+Two triggers. A **daily** recap at 00:05 UTC, and a **weekly** one on Mondays at
+00:20 UTC covering the seven settled days behind it. Both go to Telegram and X.
+
+### The daily post is not about yesterday
+
+§P5 asks for a daily card at 00:00 UTC and the obvious reading is a recap of the
+day that just ended. That reading publishes a number we would have to correct.
+
+§3.3 watches each arrival for 24 hours. An arrival at 23:40 on the 5th has an
+open window until 23:40 on the 6th, so at 00:05 on the 6th the held figure for
+the 5th is provisional — and it can only move one way, down, as round trips
+close. The site is allowed to show that: §3.4 makes rows mutable and the feed
+restamps them in front of the reader. A post cannot. It is screenshotted, quoted
+and forwarded at the value it had when it was sent.
+
+So the daily post covers the most recent day whose windows have **all** closed.
+At 00:05 on the 7th that is the 5th. The cost is a date one day further back
+than a reader might expect, and the site carries today's figure live for anyone
+who wants it sooner. `REEXPORT_WINDOW_HOURS` drives it, so if §11 settles on 12h
+or 48h the settled date follows without a code change.
+
+### What stops it publishing
+
+The same simulated-data guard as the alert path — one switch, both halves — and
+four more, in `runner.ts`:
+
+- **The indexer is down.** A total drawn across a gap is wrong in the direction
+  that flatters us.
+- **No figures for the period.** A day the provider has no page for, or a week
+  missing one of its seven days. Nothing is posted rather than a `$0` that reads
+  as a complete figure.
+- **Already posted.** The ledger is on disk, so a restart at 00:06 does not
+  repost what went out at 00:05, and a redeploy mid-month does not reset the X
+  count.
+- **Out of budget, or out of attempts.** Three tries per occurrence per channel.
+  Delivery is at-least-once — a lost response is indistinguishable from a
+  refusal — and three is enough to cross a restart while bounding the duplicate
+  risk.
+
+Missed firings are not caught up. A box that was down for a day comes back and
+posts today's recap, not yesterday's under a date nobody is thinking about any
+more.
+
+### The X budget is now enforced
+
+500 posts a month, hard, and previously documented rather than counted. That was
+survivable while nothing published without a person starting it. It is not
+survivable for an unattended process: an allowance spent by the 20th means the
+feed is silent for eleven days, and the first sign of it is a 429 during the
+exact event worth posting about.
+
+`social/budget.ts` counts against the ledger, across both halves. Scheduled
+posts may spend down to a safety margin; **alerts stop a reserve short of it**,
+because a movement not announced is one gap and a month of missing recaps is the
+account going quiet.
+
+### The card, and why only Telegram gets it
+
+`src/lib/og.tsx` already generates the daily card and already serves it at every
+page's `opengraph-image` route. The poster fetches that image over loopback
+rather than rendering a second copy — a second layout would drift from the first
+the week either was edited alone.
+
+Telegram gets it as a photo, because its messages disable link previews and
+nothing would unfurl otherwise. X does not: it unfurls the permalink's Open
+Graph tags into the same card for free, so there is no media upload to keep
+working and no dependence on an API tier that may not include one. If the fetch
+fails the post still goes out as text — the figures are in the words.
+
+### The ledger
+
+An append-only NDJSON file, one per UTC month, under `SOCIAL_LEDGER_DIR`
+(`/var/lib/tare/social` on the box, outside the checkout so `git pull` cannot
+touch it). A single `appendFile` of one line is atomic on POSIX, so the app and
+the worker can both write it without coordinating — which read-modify-write on a
+JSON file could not.
+
+Not Postgres, on the same arithmetic §11 used to drop ClickHouse: this is forty
+rows a day read by two processes that share a filesystem by construction, and a
+database dependency would stop the poster starting for bookkeeping the database
+is not otherwise part of. `PostLedger` is the seam for the day the app and the
+worker stop sharing a disk — the same day the in-process alert dedupe has to
+move to Redis.
+
+Reads and writes fail soft. Losing the bookkeeping degrades the budget count;
+throwing would lose a post.
+
+### Checking it
+
+```bash
+npm run social:check     # the clock, the ledger, the budget, the guard
+npm run social:preview   # a fortnight of dailies and the weekly, as they would post
+npm run social:preview -- --all   # every variant forced, including the rose one
+```
+
+`social:check` drives ninety days of ten-minute ticks through the real schedule
+and asserts one occurrence per day, twelve hours of lateness and no more, and
+that a three-day outage yields one post rather than three. `social:preview`
+exits non-zero if any X post would break 280 once a t.co link is counted, or any
+Telegram post would break the caption limit that lets the card be attached.
 
 ## What is verified
 

@@ -26,7 +26,10 @@ npm install -g pm2
 fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
 echo '/swapfile none swap sw 0 0' >> /etc/fstab
 
-mkdir -p /var/www /var/log/tare
+# /var/lib/tare holds the post ledger — what the social poster has already
+# published. Outside the checkout on purpose: `git pull` must not be able to
+# reach it, or a redeploy could repost a recap or reset the X monthly count.
+mkdir -p /var/www /var/log/tare /var/lib/tare/social
 git clone https://github.com/fourtisf/teradata.git /var/www/tare
 cd /var/www/tare
 git checkout main
@@ -37,6 +40,9 @@ NEXT_PUBLIC_SITE_URL=https://taredata.com
 SIM_SEED=1296520521
 ENV
 
+# `npm ci` without --omit=dev on purpose: the social poster runs through tsx,
+# which is a devDependency. Pinned in the lockfile rather than fetched by npx at
+# boot, so a restart cannot pull a different version than the one tested.
 npm ci
 npm run build
 
@@ -45,6 +51,10 @@ pm2 save
 pm2 startup systemd -u root --hp /root   # run the line it prints
 pm2 list
 ```
+
+Two processes come up: **tare** (the site) and **tare-social** (the scheduled
+poster). The poster publishes nothing while `DATA_SOURCE=sim` — it says so in
+its first ten lines of log and stays up so the schedule can be watched.
 
 ## nginx
 
@@ -95,8 +105,13 @@ git pull origin main
 npm ci
 npm run build
 pm2 reload tare
+pm2 reload tare-social
 pm2 list
 ```
+
+`pm2 reload tare-social` is safe at any hour. The ledger is on disk and outside
+the checkout, so a reload mid-window does not repost what has already gone out
+and does not lose the month's X count.
 
 ## Checks
 
@@ -107,6 +122,30 @@ curl -I https://taredata.com
 curl -s https://taredata.com/robots.txt        # Disallow: / while DATA_SOURCE=sim
 curl -sI https://taredata.com/opengraph-image  # image/png
 ```
+
+## The scheduled poster
+
+```bash
+pm2 logs tare-social --lines 40
+
+cd /var/www/tare
+npm run social:check                # the clock, the ledger, the budget, the guard
+npm run social:preview              # what the last fortnight would have posted
+
+# What would go out at the next firing, without waiting for midnight and
+# without sending anything.
+npm run social -- --once --dry-run --at "$(date -u -d 'tomorrow 00:06' +%Y-%m-%dT%H:%M:%SZ)"
+
+# What has actually been published, newest last.
+tail -5 /var/lib/tare/social/posts-$(date -u +%Y-%m).ndjson
+
+# X posts spent this calendar month, against the 500 allowance.
+grep -c '"channel":"x".*"ok":true' /var/lib/tare/social/posts-$(date -u +%Y-%m).ndjson
+```
+
+Bringing the feed up one channel at a time is a line in `.env.local`:
+`SOCIAL_CHANNELS=telegram` posts the recaps to Telegram only, which is the
+recoverable channel. Add `x` once the copy has been read on a real screen.
 
 `robots.txt` disallowing everything is correct and deliberate while the figures
 are simulated. Flip `DATA_SOURCE=live` in `.env.local` only when the indexer is

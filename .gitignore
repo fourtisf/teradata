@@ -9,6 +9,11 @@ next-env.d.ts
 .env.local
 .env*.local
 
+# The post ledger, when it is left at its development default. On the VPS it
+# lives in /var/lib/tare/social — a record of what has been published should
+# not sit inside a checkout that gets pulled over.
+.tare/
+
 .DS_Store
 *.pem
 npm-debug.log*

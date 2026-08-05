@@ -409,6 +409,54 @@ Paste this to start:
   much before publishing a figure we have to defend.
 ### Closed
 
+- **The daily post covers the settled day, not yesterday.** §P5 asks for a daily
+  card generated at 00:00 UTC, and the obvious reading is a recap of the day
+  that just ended. That reading publishes a number we would have to correct.
+
+  §3.3 watches each arrival for 24 hours. An arrival at 23:40 on the 5th has an
+  open window until 23:40 on the 6th, so at 00:05 on the 6th the held figure for
+  the 5th is provisional, and it can only move one way — down, as round trips
+  close. The site is allowed to show that: §3.4 makes rows mutable and the feed
+  restamps them in front of the reader. A post cannot. It is screenshotted,
+  quoted and forwarded at the value it carried when it was sent, and a headline
+  revised after publication is the one failure §1 says is not recoverable by
+  fixing the data afterwards.
+
+  So `src/lib/social/` posts the most recent day whose windows have all closed —
+  at 00:05 on the 7th, that is the 5th. What we gave up is recency: the date in
+  the post is a day further back than a reader expects, and the site carries
+  today's figure live for anyone who wants it sooner. The settled date is
+  derived from `REEXPORT_WINDOW_HOURS` rather than hard-coded, so the open
+  decision above about 12h versus 48h moves the post date with it and this
+  entry does not need reopening when that one closes.
+
+  The weekly recap is summed from seven settled days rather than read from
+  `getSummary("7d")`, for the same reason and one more: the weekly total is then
+  exactly the sum of the seven dailies that preceded it, which is the only
+  version of the figure a reader can check.
+
+- **The X post budget is enforced, and alerts yield to the schedule.** 500 posts
+  a month was documented in `alerts/config.ts` and counted nowhere. That was
+  survivable while nothing published without a person starting it, and it stops
+  being survivable the moment a process posts unattended: an allowance spent by
+  the 20th means the feed is silent for eleven days, and the first sign of it is
+  a 429 during the exact event worth posting about.
+
+  Counting it needs durable state, which the in-process dedupe never was. The
+  ledger is an append-only NDJSON file, one per UTC month — the same arithmetic
+  that closed the flow-store question, applied to forty rows a day: a database
+  dependency here would stop the poster starting for bookkeeping the database is
+  not otherwise part of, and read-modify-write on a JSON file would lose a write
+  under the race between the app and the worker, where a single `appendFile` of
+  one line does not. `PostLedger` is the seam for the day the two stop sharing a
+  disk, which is the same day the alert dedupe has to move to Redis.
+
+  The division is the part worth recording. Scheduled posts may spend down to a
+  safety margin; alerts stop a reserve short of it. Alerts are the elastic half
+  — there can be five in a day or none — so they are the half that stops first.
+  A movement not announced is one gap in the record. A month with no recaps is
+  the account going quiet.
+
 - **Flow store — Postgres, not ClickHouse.** §2 says the stack is decided and
   not to be re-litigated mid-build, so this is a change against the spec and it
   needs a reason rather than a preference.
