@@ -92,16 +92,52 @@ Using spot means every historical figure silently rewrites itself as the market
 moves, and the headline number stops being reproducible — which is the one
 property §1 says the whole brand rests on.
 
-| Variable | Source | Covers |
-|---|---|---|
-| — | **Pyth** on-chain price accounts | SOL, ETH, BTC, USDC, USDT, majors. Free, already on Solana, and readable at a historical slot. |
-| `BIRDEYE_API_KEY` | Birdeye | the long tail, and Solana-native tokens Pyth does not carry. Paid, starts modest. |
-| `COINGECKO_API_KEY` | CoinGecko Pro | fallback and reconciliation. Optional. |
+**Decided: CoinGecko, free Demo plan.** One credential.
 
-**Recommendation:** Pyth for majors, Birdeye for everything else, and store the
-price used on the row so a figure can always be re-derived from what it was
-actually computed with rather than from what the price is today. Flagging this
-as a spec gap rather than quietly picking one: §11 should record the decision.
+| Variable | Notes |
+|---|---|
+| `COINGECKO_API_KEY` | free Demo key from the [developer dashboard](https://www.coingecko.com/en/developers/dashboard) |
+| `COINGECKO_PLAN` | `demo`, or `pro` if that ever changes |
+
+The keyless public endpoint answers but is throttled hard and without warning,
+so a worker built on it looks fine in testing and drops quotes under load.
+Treat the free key as required.
+
+### Why this works despite being the free tier
+
+Ingest is real-time. We see a settlement within seconds of it landing, so the
+price we need is the *current* one — there is no historical lookup to perform,
+which is what would have made a free plan painful.
+
+The whole design falls out of one number, 10,000 calls a month:
+
+- One `/simple/price` call covers every asset in `src/lib/config/prices.ts`, so
+  the call count depends on the cache window alone. It does not grow with how
+  many assets we track or how busy the chain is.
+- A 10-minute window is 4,320 calls a month — 43% of the allowance, leaving
+  room for backfill and for the window to be tightened later.
+- Concurrent arrivals share the request in flight rather than each firing one.
+
+### What it costs, stated rather than hidden
+
+A quote can be up to ten minutes old. On a stablecoin that is nothing; on SOL
+in a fast hour it is a few tenths of a percent. `arrivals.price_ts` records when
+the quote was observed, so the staleness is a fact anyone can check rather than
+an assumption they have to make.
+
+An asset outside the map is written **unpriced**, not at $0. A $0 arrival
+understates the headline while looking like a complete figure, which is worse
+than an openly missing one — the same treatment §3.1 gives an arrival it cannot
+match. `amount_usd`, `price_usd`, `price_source` and `price_ts` are all nullable
+for that reason, and the unpriced share belongs on the status page next to the
+unattributed one.
+
+### If the long tail ever matters
+
+It does not today: the size floor is $100K, and arrivals clearing it are
+overwhelmingly stables, SOL and wrapped majors, all of which CoinGecko carries.
+If that changes, `PriceSource` in `src/lib/prices/types.ts` is the seam — add a
+second implementation, no caller changes.
 
 ---
 
@@ -155,7 +191,7 @@ Alerts stay refused until `DATA_SOURCE=live` regardless of these being set.
 ## Order to buy in
 
 1. **Helius gRPC + RPC.** Nothing else is useful without it. P1 ships on this alone.
-2. **Prices.** P1 cannot write a USD figure without it.
+2. **CoinGecko free Demo key.** P1 cannot write a USD figure without it.
 3. **ClickHouse.** Somewhere to put the rows.
 4. **Bridge APIs** (free) → P2 correlation starts producing matched arrivals.
 5. **Dune** → the entity seed set, and CEX flow joins the headline figure.

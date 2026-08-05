@@ -409,6 +409,26 @@ Paste this to start:
   much before publishing a figure we have to defend.
 ### Closed
 
+- **Price source — CoinGecko, free Demo plan.** §4 gives `arrivals` both
+  `amount_native` and `amount_usd` and names nothing to convert between them.
+  Converting at read time was never an option: it makes every historical figure
+  rewrite itself as the market moves, so `/day/2026-08-05` shows a different
+  total each time it loads and the headline stops being reproducible.
+
+  The free tier is enough because ingest is real-time — we see a settlement
+  within seconds, so the price needed is the current one and there is no
+  historical lookup to perform. One `/simple/price` request covers every asset
+  in `src/lib/config/prices.ts`, so the monthly call count depends on the cache
+  window alone rather than on chain activity: ten minutes is 4,320 calls against
+  a 10,000 allowance.
+
+  Two costs, both recorded rather than hidden. A quote can be up to ten minutes
+  old, so `price_ts` stores when it was observed. And an asset outside the map
+  is written **unpriced**, never at $0 — a zero understates the headline while
+  looking like a complete figure, which is the same failure §3.1 refuses when it
+  keeps an unmatched arrival instead of guessing its origin. `PriceSource` is
+  the seam if the long tail ever needs a second source.
+
 - **Brand and domain — locked.** The product is **Tare**, on `taredata.com`.
   Named after the weighing term: the deduction you make from gross to get net,
   which is the whole method. It replaced `manifest`, which was correct in meaning

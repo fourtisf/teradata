@@ -41,7 +41,8 @@ CREATE TABLE IF NOT EXISTS tare.arrivals
 
     asset                 LowCardinality(String),
     amount_native         Decimal(38, 12),
-    amount_usd            Decimal(18, 2),
+    -- Null when the asset could not be priced. See price_usd below.
+    amount_usd            Nullable(Decimal(18, 2)),
 
     -- ADDITION to §4. amount_usd has to be computed from a price at the
     -- settlement timestamp, not spot at read time — otherwise every historical
@@ -49,8 +50,19 @@ CREATE TABLE IF NOT EXISTS tare.arrivals
     -- stops being reproducible, which is the one property §1 says the whole
     -- brand rests on. Storing the price and its source means any figure can be
     -- re-derived from what it was actually computed with.
-    price_usd             Decimal(18, 6),
-    price_source          LowCardinality(String),
+    --
+    -- `price_ts` is when the quote was observed, which is not when the arrival
+    -- settled. Quotes are cached to stay inside a free API allowance, so one
+    -- can be minutes old — recording that makes the error a fact anyone can
+    -- check rather than an assumption they have to make.
+    --
+    -- Nullable because an asset we cannot price is written anyway. Counting it
+    -- at $0 would understate the headline while looking like a complete figure,
+    -- which is worse than admitting the gap — the same treatment §3.1 gives an
+    -- arrival it cannot match.
+    price_usd             Nullable(Decimal(18, 6)),
+    price_source          LowCardinality(Nullable(String)),
+    price_ts              Nullable(DateTime64(3)),
 
     solana_tx             String,
     solana_slot           UInt64,

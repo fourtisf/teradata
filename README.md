@@ -231,9 +231,11 @@ blocks, and the order to acquire them in. The short version:
 - **Helius gRPC/Geyser, plus an RPC url.** Not on the free tier and not
   substitutable with polling; §2 fixes the choice because of the under-10s
   promise. This alone is most of P1.
-- **A price source.** `amount_native → amount_usd` needs the price *at
-  settlement*. This is a gap in the spec rather than a line item in it — §11
-  should record the decision. Pyth for majors, Birdeye for the long tail.
+- **A CoinGecko free Demo key.** `amount_native → amount_usd` needs the price *at
+  settlement*, which is a gap in the spec rather than a line item in it. The
+  free tier works because ingest is real-time — there is no historical lookup
+  to do — and one request covers every tracked asset, so the monthly call count
+  depends on the cache window alone. `src/lib/prices/` and §11 have the detail.
 - **ClickHouse**, plus Postgres and Redis from P2. Redis also retires the
   in-process alert dedupe and the one-instance PM2 constraint.
 - **Origin-chain reads** for the five bridges in §3.1 — the bridges' own APIs to
