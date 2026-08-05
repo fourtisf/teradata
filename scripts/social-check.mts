@@ -18,6 +18,7 @@ import { join } from "node:path";
 import { capFor, checkBudget } from "@/lib/social/budget";
 import { FileLedger, memoryLedger } from "@/lib/social/ledger";
 import { buildPost, runDue } from "@/lib/social/runner";
+import { parseCommand, replyTo } from "@/lib/social/commands";
 import { getPosterState } from "@/lib/social/state";
 import {
   dueOccurrences,
@@ -340,6 +341,48 @@ group("composition");
   const weekly = await buildPost(provider, dueOccurrences(Date.parse("2026-08-03T00:20:00Z"), [MONDAY])[0]!, Date.parse("2026-08-03T00:20:00Z"));
   check("the weekly composes", weekly !== null);
   check("and carries no card", weekly?.cardDate === null);
+}
+
+/* -------------------------------------------------------------------------
+ * The bot's commands.
+ *
+ * The parser is the attack surface — it is the only place user text reaches —
+ * and the replies are subject to the same guard as everything else that speaks
+ * under the brand.
+ * ---------------------------------------------------------------------- */
+group("commands");
+{
+  check("a plain command parses", parseCommand("/today") === "today");
+  check("the bot suffix is stripped", parseCommand("/today@TareDataBot") === "today");
+  check("case does not matter", parseCommand("/TODAY") === "today");
+  check("leading space does not matter", parseCommand("  /week ") === "week");
+  check("/start is help", parseCommand("/start") === "help");
+  check("arguments are discarded, not parsed", parseCommand("/status now please") === "status");
+  check("prose is not a command", parseCommand("what came in today?") === null);
+  check("an unknown command is not one either", parseCommand("/drop") === null);
+  check("and neither is an empty message", parseCommand("") === null);
+
+  const now = Date.parse("2026-08-05T16:00:00Z");
+  const provider = new SimProvider({ now: () => now });
+  const poster = await getPosterState(now, new FileLedger(join(tmpdir(), "tare-absent")));
+
+  const help = await replyTo("help", provider, poster);
+  check("help lists the commands", ["/today", "/week", "/status"].every((c) => help.includes(c)));
+
+  for (const command of ["today", "week", "status"] as const) {
+    const reply = await replyTo(command, provider, poster);
+    if (!ALLOW_SIMULATED) {
+      // The guard: no figure is quoted while the data is generated. A reply is
+      // forwarded and screenshotted exactly like a broadcast.
+      check(`/${command} quotes no figure on simulated data`, !/\$[\d.]/.test(reply), reply.slice(0, 90));
+      check(`/${command} says why instead`, reply.includes("Nothing is measured yet"));
+    } else {
+      check(`/${command} is labelled when the hatch is open`, reply.startsWith("[SIMULATED]"), reply.slice(0, 40));
+    }
+    check(`/${command} names no firm`, !/\b(Jump|Wintermute|Alameda|whale|smart money)\b/i.test(reply));
+    // Telegram rejects a message over 4096 characters outright.
+    check(`/${command} fits a Telegram message`, reply.length <= 4096, `${reply.length}`);
+  }
 }
 
 /* -------------------------------------------------------------------------

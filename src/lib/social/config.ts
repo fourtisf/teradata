@@ -92,3 +92,11 @@ export const CARD_ORIGIN = (
 
 /** Attach the card to Telegram posts. Off is text-only, which always works. */
 export const CARD_ENABLED = process.env.SOCIAL_CARD !== "false";
+
+/**
+ * The value Telegram presents on every webhook delivery, in
+ * `X-Telegram-Bot-Api-Secret-Token`. Unset closes the route entirely, the same
+ * way an unset `ALERTS_DISPATCH_SECRET` closes the dispatch route — an open
+ * endpoint that makes the bot speak is not a thing to leave lying around.
+ */
+export const TELEGRAM_WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET?.trim() || null;

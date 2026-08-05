@@ -12,8 +12,17 @@ export function telegramConfigured(): boolean {
   return Boolean(TELEGRAM.token && TELEGRAM.chatId);
 }
 
-export async function sendTelegram(text: string): Promise<DeliveryResult> {
-  if (!telegramConfigured()) {
+/**
+ * `chatId` overrides the configured channel.
+ *
+ * Broadcasts go to `TELEGRAM_CHAT_ID` and always should. The command handler in
+ * `social/commands.ts` is the exception: it answers whoever asked, in their own
+ * chat, and sending that to the channel instead would publish one person's
+ * question to every subscriber.
+ */
+export async function sendTelegram(text: string, chatId?: string | number): Promise<DeliveryResult> {
+  const target = chatId ?? TELEGRAM.chatId;
+  if (!TELEGRAM.token || !target) {
     return { channel: "telegram", ok: false, reason: "not configured" };
   }
 
@@ -22,7 +31,7 @@ export async function sendTelegram(text: string): Promise<DeliveryResult> {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        chat_id: TELEGRAM.chatId,
+        chat_id: target,
         text,
         parse_mode: "HTML",
         // The permalink is for the reader to follow, not for Telegram to

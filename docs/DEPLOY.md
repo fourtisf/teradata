@@ -143,6 +143,21 @@ tail -5 /var/lib/tare/social/posts-$(date -u +%Y-%m).ndjson
 grep -c '"channel":"x".*"ok":true' /var/lib/tare/social/posts-$(date -u +%Y-%m).ndjson
 ```
 
+### The bot's webhook
+
+Separate from the poster, and it needs the site to be up on HTTPS first —
+Telegram will not register a webhook it cannot reach.
+
+```bash
+cd /var/www/tare
+npm run telegram:webhook -- --info     # what is registered now
+npm run telegram:webhook -- --set      # points it at NEXT_PUBLIC_SITE_URL
+```
+
+`--info` reports `last error` when Telegram's deliveries are failing, which is
+the first place to look if the bot has gone quiet. There is one webhook per bot
+token, so setting it from anywhere else takes it away from here.
+
 Bringing the feed up one channel at a time is a line in `.env.local`:
 `SOCIAL_CHANNELS=telegram` posts the recaps to Telegram only, which is the
 recoverable channel. Add `x` once the copy has been read on a real screen.

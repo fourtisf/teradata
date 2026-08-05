@@ -31,6 +31,7 @@ strip reads `Simulated`, a preview banner says so on every page, and
 /status                 indexer state, unattributed share, changelog
 /api/waitlist           POST { email }, forwards to WAITLIST_WEBHOOK_URL
 /api/alerts/dispatch    POST an alert event, behind ALERTS_DISPATCH_SECRET
+/api/telegram/webhook   Telegram delivers bot commands here, behind a secret token
 /opengraph-image        the daily card, and one per public page
 /sitemap.xml /robots.txt
 ```
@@ -54,6 +55,7 @@ npm run social         # the scheduled poster (see below); PM2 runs this
 npm run social:check   # the scheduler's tests — clock, ledger, budget, guard
 npm run social:preview # every scheduled post, rendered, nothing sent
 npm run alerts:preview # every alert variant, rendered, nothing sent
+npm run telegram:webhook -- --info   # where Telegram is delivering bot commands
 ```
 
 Deploys to Vercel with no configuration. `DATA_SOURCE` defaults to `sim`, so a
@@ -305,6 +307,40 @@ move to Redis.
 
 Reads and writes fail soft. Losing the bookkeeping degrades the budget count;
 throwing would lose a post.
+
+## The bot answers as well as posts
+
+`/today`, `/week`, `/status` and `/help`, in whatever chat asks. Everything
+above this line pushes — a recap fires on a clock and goes to everyone; this is
+the other direction.
+
+A webhook rather than a `getUpdates` loop: the app is already public behind
+nginx with TLS, so it is a route instead of a second polling process with a
+durable offset to keep, and Telegram's own `secret_token` authenticates it so
+there is no scheme to invent. Unset `TELEGRAM_WEBHOOK_SECRET` closes the route
+the way an unset `ALERTS_DISPATCH_SECRET` closes the dispatch one.
+
+```bash
+openssl rand -hex 32                 # put it in .env.local, then
+npm run telegram:webhook -- --info   # check what is registered first
+npm run telegram:webhook -- --set
+npm run telegram:webhook -- --delete
+```
+
+Telegram holds exactly one webhook per bot token, so `--set` from a laptop
+points the production bot at the laptop. `--info` first, always.
+
+**The same guard applies to answers.** A reply is one-to-one and pull-based,
+which sounds safer than a broadcast and is not: it is forwarded and
+screenshotted the same way. So while `DATA_SOURCE=sim` the bot says nothing is
+measured yet and links to the method, rather than quoting a generated figure
+with a label a screenshot drops.
+
+Two other rules hold the surface small. Nothing a user types is echoed back —
+the parser keeps the first token and discards the rest, so there is no argument
+to reflect and no way to make the account post someone else's link. And the
+reply goes to the chat that asked, never to `TELEGRAM_CHAT_ID`, which would
+publish one person's question to every subscriber.
 
 ### Checking it
 

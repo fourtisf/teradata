@@ -13,7 +13,8 @@
     "social:check": "tsx --tsconfig tsconfig.json scripts/social-check.mts",
     "alerts:preview": "tsx --tsconfig tsconfig.json scripts/alert-preview.mts",
     "alerts:test": "tsx --tsconfig tsconfig.json scripts/alert-test.mts",
-    "x:verify": "tsx --tsconfig tsconfig.json scripts/x-verify.mts"
+    "x:verify": "tsx --tsconfig tsconfig.json scripts/x-verify.mts",
+    "telegram:webhook": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/telegram-webhook.mts"
   },
   "dependencies": {
     "next": "16.3.0",
