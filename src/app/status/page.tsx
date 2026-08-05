@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { CoverageSection } from "@/components/CoverageSection";
 import { Nav } from "@/components/Nav";
+import { PosterSection } from "@/components/PosterSection";
 import { Reveal } from "@/components/Reveal";
 import { SimNotice } from "@/components/SimNotice";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getDataProvider } from "@/lib/data";
+import { getPosterState } from "@/lib/social/state";
 import { percent } from "@/lib/format";
 import { CHANGELOG } from "@/lib/config/changelog";
 
@@ -14,7 +16,7 @@ export const metadata: Metadata = {
   title: "Status and changelog · Tare",
   description:
     "What the indexer is doing right now, what share of inbound value we cannot attribute, " +
-    "and every change to how the number is measured.",
+    "what the two accounts have published, and every change to how the number is measured.",
   alternates: { canonical: "/status" },
 };
 
@@ -27,7 +29,11 @@ export const metadata: Metadata = {
  */
 export default async function StatusPage() {
   const provider = getDataProvider();
-  const [coverage, status] = await Promise.all([provider.getCoverage(), provider.getStatus()]);
+  const [coverage, status, poster] = await Promise.all([
+    provider.getCoverage(),
+    provider.getStatus(),
+    getPosterState(),
+  ]);
 
   return (
     <>
@@ -59,6 +65,8 @@ export default async function StatusPage() {
         </header>
 
         <CoverageSection coverage={coverage} status={status} source={provider.source} />
+
+        <PosterSection state={poster} source={provider.source} />
 
         <section id="changelog">
           <Reveal className="s-head">

@@ -29,7 +29,7 @@
 
 import {
   DAILY_AT_MINUTE,
-  ENABLED_JOBS,
+  enabledJobs,
   REEXPORT_WINDOW_HOURS,
   WEEKLY_AT_MINUTE,
   WEEKLY_WEEKDAY,
@@ -60,7 +60,7 @@ export const JOB_SPECS: readonly JobSpec[] = [
 
 /** The specs actually switched on, in `SOCIAL_JOBS` order-independent form. */
 export function activeSpecs(): JobSpec[] {
-  return JOB_SPECS.filter((spec) => ENABLED_JOBS.includes(spec.kind));
+  return JOB_SPECS.filter((spec) => enabledJobs().includes(spec.kind));
 }
 
 /**
@@ -75,6 +75,23 @@ export function mostRecentDue(spec: JobSpec, now: number): number | null {
     const date = utcDate(now - back * DAY);
     const at = dayStartMs(date) + spec.atMinuteUtc * 60_000;
     if (at > now) continue;
+    if (spec.weekday !== null && utcWeekday(at) !== spec.weekday) continue;
+    return at;
+  }
+  return null;
+}
+
+/**
+ * The next instant this spec is due after `now`.
+ *
+ * The mirror of `mostRecentDue`, and it exists for the status page rather than
+ * the poster — the poster never needs to know, it just looks at the clock every
+ * minute. Null on the same bounded walk, for the same reason.
+ */
+export function nextDue(spec: JobSpec, now: number): number | null {
+  for (let ahead = 0; ahead <= 7; ahead++) {
+    const at = dayStartMs(utcDate(now + ahead * DAY)) + spec.atMinuteUtc * 60_000;
+    if (at <= now) continue;
     if (spec.weekday !== null && utcWeekday(at) !== spec.weekday) continue;
     return at;
   }

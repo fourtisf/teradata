@@ -5,11 +5,15 @@
  * one is an unattended process that posts at the wrong hour or not at all —
  * neither of which announces itself.
  *
- * `SOCIAL_LEDGER_DIR` is deliberately not here; it lives in `ledger.ts`. The
- * alert path reads the ledger from inside a Next request handler, and the list
- * parsing below throws on a typo. Keeping the two apart means a malformed
- * `SOCIAL_CHANNELS` takes down the poster — the process that would have acted
- * on it — and not a route that never reads it.
+ * `SOCIAL_LEDGER_DIR` is deliberately not here; it lives in `ledger.ts`.
+ *
+ * The two list settings are parsed lazily, and that is not a micro-optimisation.
+ * A malformed one throws — silently falling back to "everything" is how a typo
+ * becomes a post on a channel someone meant to switch off — and the status page
+ * imports this module to say when the next recap is due. Parsing at module load
+ * would let `SOCIAL_CHANNELS=telegramm` take down a public page that never reads
+ * it. Parsing on the first call means the throw lands in the process that would
+ * have acted on the value.
  */
 
 import type { Channel, JobKind } from "@/lib/social/types";
@@ -34,11 +38,16 @@ function list<T extends string>(value: string | undefined, allowed: readonly T[]
   return picked;
 }
 
+/** Memoised so the parse, and any throw, happens once per process. */
+function once<T>(read: () => T): () => T {
+  let value: T | undefined;
+  return () => (value ??= read());
+}
+
 /** Which clock triggers run. Both by default. */
-export const ENABLED_JOBS = list<JobKind>(process.env.SOCIAL_JOBS, ["daily", "weekly"], [
-  "daily",
-  "weekly",
-]);
+export const enabledJobs = once(() =>
+  list<JobKind>(process.env.SOCIAL_JOBS, ["daily", "weekly"], ["daily", "weekly"]),
+);
 
 /**
  * Which accounts scheduled posts go to.
@@ -48,10 +57,9 @@ export const ENABLED_JOBS = list<JobKind>(process.env.SOCIAL_JOBS, ["daily", "we
  * Telegram first and adding X once the copy has been read on a real screen has
  * to be one env var rather than a code change.
  */
-export const ENABLED_CHANNELS = list<Channel>(process.env.SOCIAL_CHANNELS, ["telegram", "x"], [
-  "telegram",
-  "x",
-]);
+export const enabledChannels = once(() =>
+  list<Channel>(process.env.SOCIAL_CHANNELS, ["telegram", "x"], ["telegram", "x"]),
+);
 
 /** Minutes past midnight UTC. */
 export const DAILY_AT_MINUTE = num(process.env.SOCIAL_DAILY_AT_MINUTE, 5);

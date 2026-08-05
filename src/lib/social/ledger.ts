@@ -30,7 +30,7 @@
  * calendar-month count, and a dedupe key is never more than a few days old.
  */
 
-import { appendFile, mkdir, readFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { utcMonth } from "@/lib/social/time";
 import type { Channel, PostLedger, PostRecord } from "@/lib/social/types";
@@ -76,13 +76,14 @@ export class FileLedger implements PostLedger {
   constructor(private readonly dir: string = LEDGER_DIR) {}
 
   /**
-   * The two months either side of `at`.
+   * The two months either side of `at`, oldest first.
    *
    * A dedupe key is at most days old, so the month containing `at` plus the one
    * before it covers every case including a post due at 00:05 on the 1st. It is
    * `at` and not `Date.now()` on purpose: `record` files by the instant the
    * caller gave it, and a reader working from wall-clock time would miss its
    * own write the moment the two fell in different months.
+   *
    */
   private async recent(at: number): Promise<PostRecord[]> {
     const previous = Date.parse(`${utcMonth(at)}-01T00:00:00.000Z`) - 1;
@@ -111,6 +112,31 @@ export class FileLedger implements PostLedger {
   async record(record: PostRecord): Promise<void> {
     await mkdir(this.dir, { recursive: true });
     await appendFile(fileFor(this.dir, Date.parse(record.at)), `${JSON.stringify(record)}\n`, "utf8");
+  }
+
+  /**
+   * The newest month files, for the status page rather than the delivery path.
+   *
+   * Reads back from the most recent file that exists rather than from today, so
+   * a feed that has been quiet for a quarter still reports when it last
+   * published instead of reporting nothing — "nothing published yet" and "last
+   * published in April" are different claims and only one of them is true.
+   *
+   * Throws when the directory cannot be listed. That is the one condition the
+   * status page needs told apart from an empty ledger: a deploy that does not
+   * share a disk with the worker knows nothing about what was published, and
+   * should say so rather than claim silence.
+   *
+   * Not on `PostLedger`. That interface is what delivery needs, and widening it
+   * would make every future implementation carry a method one page uses.
+   */
+  async history(months = 2): Promise<PostRecord[]> {
+    const files = (await readdir(this.dir))
+      .filter((name) => /^posts-\d{4}-\d{2}\.ndjson$/.test(name))
+      .sort()
+      .slice(-months);
+    const read = await Promise.all(files.map((name) => readRecords(join(this.dir, name))));
+    return read.flat();
   }
 }
 

@@ -18,6 +18,7 @@ import { join } from "node:path";
 import { capFor, checkBudget } from "@/lib/social/budget";
 import { FileLedger, memoryLedger } from "@/lib/social/ledger";
 import { buildPost, runDue } from "@/lib/social/runner";
+import { getPosterState } from "@/lib/social/state";
 import {
   dueOccurrences,
   mostRecentDue,
@@ -163,15 +164,15 @@ group("ledger");
   const ledger = memoryLedger();
   const at = Date.parse("2026-08-07T00:05:00Z");
 
-  check("nothing is recorded to begin with", !(await ledger.has("daily:2026-08-07", "telegram")));
+  check("nothing is recorded to begin with", !(await ledger.has("daily:2026-08-07", "telegram", at)));
 
   await ledger.record({ key: "daily:2026-08-07", channel: "telegram", purpose: "scheduled", ok: true, at: new Date(at).toISOString() });
-  check("a success dedupes", await ledger.has("daily:2026-08-07", "telegram"));
-  check("on that channel only", !(await ledger.has("daily:2026-08-07", "x")));
+  check("a success dedupes", await ledger.has("daily:2026-08-07", "telegram", at));
+  check("on that channel only", !(await ledger.has("daily:2026-08-07", "x", at)));
 
   await ledger.record({ key: "daily:2026-08-07", channel: "x", purpose: "scheduled", ok: false, reason: "http 503", at: new Date(at).toISOString() });
-  check("a failure does not dedupe", !(await ledger.has("daily:2026-08-07", "x")));
-  check("but it counts as an attempt", (await ledger.attempts("daily:2026-08-07", "x")) === 1);
+  check("a failure does not dedupe", !(await ledger.has("daily:2026-08-07", "x", at)));
+  check("but it counts as an attempt", (await ledger.attempts("daily:2026-08-07", "x", at)) === 1);
 
   check("a failure does not spend the budget", (await ledger.countMonth("x", at)) === 0);
   await ledger.record({ key: "alert:arrival:1", channel: "x", purpose: "alert", ok: true, at: new Date(at).toISOString() });
@@ -210,6 +211,62 @@ group("file ledger");
   check("the budget counts August's alone", (await ledger.countMonth("x", august)) === 1);
   check("and September's alone", (await ledger.countMonth("x", september)) === 1);
   check("two month files were written", (await readdir(dir)).sort().join(",") === "posts-2026-08.ndjson,posts-2026-09.ndjson", (await readdir(dir)).join(","));
+
+  await rm(dir, { recursive: true, force: true });
+}
+
+/* -------------------------------------------------------------------------
+ * What the status page says the poster has done.
+ *
+ * The figures on a public page have to be the ones the ledger actually holds,
+ * and the two easy ways to get this wrong are both asserted here: reporting a
+ * firing date where a reader expects the period it covered, and counting a
+ * failed post as a published one.
+ * ---------------------------------------------------------------------- */
+group("poster state");
+{
+  const dir = await mkdtemp(join(tmpdir(), "tare-state-"));
+  const ledger = new FileLedger(dir);
+  const now = Date.parse("2026-08-05T16:00:00Z");
+  const line = (key: string, channel: "telegram" | "x", ok: boolean, at: string) =>
+    ledger.record({ key, channel, purpose: "scheduled", ok, at });
+
+  // A daily that fired at 00:05 on the 5th covers the 3rd, and reached only
+  // Telegram: X was attempted and returned 503.
+  await line("daily:2026-08-05", "telegram", true, "2026-08-05T00:05:03.000Z");
+  await line("daily:2026-08-05", "x", false, "2026-08-05T00:05:05.000Z");
+  await line("daily:2026-08-04", "x", true, "2026-08-04T00:05:06.000Z");
+  await line("weekly:2026-08-03", "telegram", true, "2026-08-03T00:20:03.000Z");
+
+  const state = await getPosterState(now, ledger);
+  check("the ledger is readable", state.available);
+  check("the last daily is the newest firing", state.lastDaily?.at === "2026-08-05T00:05:03.000Z");
+  check(
+    "reported as the day it covered, not the day it fired",
+    state.lastDaily?.from === "2026-08-03" && state.lastDaily?.to === "2026-08-03",
+    `${state.lastDaily?.from}..${state.lastDaily?.to}`,
+  );
+  check(
+    "a channel that failed is not claimed",
+    state.lastDaily?.channels.join(",") === "telegram",
+    state.lastDaily?.channels.join(","),
+  );
+  check(
+    "the weekly covers seven settled days",
+    state.lastWeekly?.from === "2026-07-26" && state.lastWeekly?.to === "2026-08-01",
+    `${state.lastWeekly?.from}..${state.lastWeekly?.to}`,
+  );
+  check("only successful X posts are counted", state.xUsedThisMonth === 1, `${state.xUsedThisMonth}`);
+  check("the cap shown is the scheduled one", state.xCap === capFor("scheduled"));
+  check("the next firings are soonest first", state.next.length > 0 && state.next.every((e, i, all) => i === 0 || all[i - 1]!.atMs <= e.atMs));
+  check("and every one is in the future", state.next.every((e) => e.atMs > now));
+
+  // The distinction the page depends on: a ledger that cannot be read is not
+  // the same claim as a ledger that is empty.
+  const absent = await getPosterState(now, new FileLedger(join(dir, "does-not-exist")));
+  check("an unreadable ledger reports unavailable", !absent.available);
+  check("rather than nothing published", absent.lastDaily === null && absent.xUsedThisMonth === 0);
+  check("and the schedule is still answered", absent.next.length === state.next.length);
 
   await rm(dir, { recursive: true, force: true });
 }

@@ -20,7 +20,7 @@ import { getDataProvider } from "@/lib/data";
 import { checkBudget } from "@/lib/social/budget";
 import { fetchDayCard } from "@/lib/social/card";
 import { composeDaily, composeWeekly } from "@/lib/social/compose";
-import { ENABLED_CHANNELS } from "@/lib/social/config";
+import { enabledChannels } from "@/lib/social/config";
 import { dailyFigures, weeklyFigures } from "@/lib/social/figures";
 import { getLedger } from "@/lib/social/ledger";
 import { dueOccurrences, settledDate, settledWeek } from "@/lib/social/schedule";
@@ -125,7 +125,7 @@ export async function runDue(options: RunOptions = {}): Promise<PostOutcome[]> {
   const now = options.now ?? Date.now();
   const provider = options.provider ?? getDataProvider();
   const ledger = options.ledger ?? getLedger();
-  const channels = ENABLED_CHANNELS.filter((c) => !options.only || options.only.includes(c));
+  const channels = enabledChannels().filter((c) => !options.only || options.only.includes(c));
   const occurrences = dueOccurrences(now, options.specs);
   const results: PostOutcome[] = [];
 

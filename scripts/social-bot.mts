@@ -45,8 +45,8 @@ import { xConfigured } from "@/lib/alerts/x";
 import { capFor } from "@/lib/social/budget";
 import {
   CARD_ENABLED,
-  ENABLED_CHANNELS,
-  ENABLED_JOBS,
+  enabledChannels,
+  enabledJobs,
   REEXPORT_WINDOW_HOURS,
   TICK_MS,
 } from "@/lib/social/config";
@@ -94,8 +94,8 @@ const log = (line: string) => console.log(`${stamp()}  ${line}`);
  * ------------------------------------------------------------------------ */
 log(`tare social poster`);
 log(`  data source     ${provider.source}${provider.source === "sim" ? "  (figures are invented)" : ""}`);
-log(`  jobs            ${ENABLED_JOBS.join(", ")}`);
-log(`  channels        ${(only ?? ENABLED_CHANNELS).join(", ")}`);
+log(`  jobs            ${enabledJobs().join(", ")}`);
+log(`  channels        ${(only ?? enabledChannels()).join(", ")}`);
 log(`  telegram        ${telegramConfigured() ? "configured" : "not configured"}`);
 log(`  x               ${xConfigured() ? "configured" : "not configured"}  (scheduled cap ${capFor("scheduled")}/month)`);
 log(`  card image      ${CARD_ENABLED ? "on" : "off"}`);
@@ -126,7 +126,7 @@ for (const spec of activeSpecs()) {
 }
 
 const ledger = getLedger();
-for (const c of only ?? ENABLED_CHANNELS) {
+for (const c of only ?? enabledChannels()) {
   if (c === "x") log(`  x posts this month  ${await ledger.countMonth("x", clock())}`);
 }
 
