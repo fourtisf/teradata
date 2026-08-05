@@ -203,10 +203,19 @@ Checked against a real browser at 1440px, 920px and 360px:
 
 ## What P1 needs
 
-- Helius API key and a gRPC/Geyser endpoint. RPC polling cannot hit the
-  event-to-alert-under-10-seconds promise, so this is not optional.
-- Origin-chain RPC endpoints with log subscriptions for the five bridges in
-  §3.1.
-- ClickHouse connection details, plus Postgres and Redis for P2 onwards.
+`docs/P1-CREDENTIALS.md` is the full list — what each credential costs, what it
+blocks, and the order to acquire them in. The short version:
+
+- **Helius gRPC/Geyser, plus an RPC url.** Not on the free tier and not
+  substitutable with polling; §2 fixes the choice because of the under-10s
+  promise. This alone is most of P1.
+- **A price source.** `amount_native → amount_usd` needs the price *at
+  settlement*. This is a gap in the spec rather than a line item in it — §11
+  should record the decision. Pyth for majors, Birdeye for the long tail.
+- **ClickHouse**, plus Postgres and Redis from P2. Redis also retires the
+  in-process alert dedupe and the one-instance PM2 constraint.
+- **Origin-chain reads** for the five bridges in §3.1 — the bridges' own APIs to
+  start, EVM log subscriptions where volume justifies owning the read.
+- **An entity seed set** for §3.2. Dune bootstraps it; curation is permanent.
 - A decision on the size floor and the re-export window (§11) once there is real
   volume to test against.
