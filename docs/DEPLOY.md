@@ -29,7 +29,7 @@ echo '/swapfile none swap sw 0 0' >> /etc/fstab
 mkdir -p /var/www /var/log/tare
 git clone https://github.com/fourtisf/teradata.git /var/www/tare
 cd /var/www/tare
-git checkout claude/new-session-8t84md
+git checkout main
 
 cat > .env.local <<'ENV'
 DATA_SOURCE=sim
@@ -91,7 +91,7 @@ certbot --nginx -d taredata.com -d www.taredata.com --redirect --agree-tos -m yo
 
 ```bash
 cd /var/www/tare
-git pull origin claude/new-session-8t84md
+git pull origin main
 npm ci
 npm run build
 pm2 reload tare

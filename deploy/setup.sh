@@ -2,7 +2,7 @@
 #
 # First deploy and redeploy, for an Ubuntu VPS. Safe to re-run.
 #
-#   curl -fsSL https://raw.githubusercontent.com/fourtisf/teradata/claude/new-session-8t84md/deploy/setup.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/fourtisf/teradata/main/deploy/setup.sh | bash
 #
 # Deliberately not pasted as loose lines: a multi-line paste into a terminal
 # can be swallowed by whatever command happens to read stdin first, and half a
@@ -10,7 +10,7 @@
 set -euo pipefail
 
 REPO="${REPO:-https://github.com/fourtisf/teradata.git}"
-BRANCH="${BRANCH:-claude/new-session-8t84md}"
+BRANCH="${BRANCH:-main}"
 APP_DIR="${APP_DIR:-/var/www/tare}"
 DOMAIN="${DOMAIN:-taredata.com}"
 
