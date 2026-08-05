@@ -29,7 +29,12 @@ function percentEncode(value: string): string {
   );
 }
 
-function authorizationHeader(method: string, url: string): string {
+/**
+ * Exported so credentials can be checked without publishing anything. The
+ * account is public: a test post is visible to everyone for as long as it takes
+ * to notice and delete it, so `scripts/x-verify.mts` signs a read instead.
+ */
+export function authorizationHeader(method: string, url: string): string {
   const c = X_CREDENTIALS;
   const params: Record<string, string> = {
     oauth_consumer_key: c.consumerKey!,
