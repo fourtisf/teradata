@@ -144,19 +144,29 @@ Deterministic rather than random, for two reasons: a retry after a transport
 error produces the identical message rather than a second different one, and a
 reviewer can reproduce exactly what went out.
 
-The register is a desk note, not a marketing post — declarative, no exclamation,
-no hype adjective. And **the first line never needs a glossary.** The site can
-afford a term of art next to a definition; an alert arrives alone on someone's
-phone with no page around it, so the body says *came in*, *went back out*, *has
-not moved* rather than *re-exported*, *idle capital*, *dwell*. The schema words
-still travel — the footer carries the confidence class and its plain-English
-meaning together, after a sentence that has already said what happened, which is
-how a reader picks the vocabulary up rather than bouncing off it.
+The voice is native to the timeline it posts on. Number first, short sentences,
+fragments where a fragment is clearer, none of the hedging a press release would
+add. *"$39.9M in from Ethereum. Out again four hours later."* That is the
+register, and note that it is **shorter** than the polite version rather than
+louder — no exclamation, no all-caps, no rocket, no adjective doing work a
+number should do. The figures are the only interesting thing in the message and
+anything decorating them competes with them.
 
-§1 binds the copy the same way it binds the schema: flow and the wallet's
-verifiable properties, never a firm. The dispatcher also refuses a `first_seen`
-event whose entry marks the recipient as returning, because every phrasing of
-that alert opens by asserting the wallet is new.
+**The first line never needs a glossary.** The site can afford a term of art
+next to a definition; an alert arrives alone on someone's phone with no page
+around it, so the body says *in*, *out again*, *still sitting*, *dry powder* —
+not *re-exported*, *idle capital*, *dwell*. Most variants also write their own
+header, because one repeated category label across every post is what makes a
+feed look automated. The schema words still travel: the footer pairs the
+confidence class with what it actually means, under a sentence that has already
+shown what it describes.
+
+§1 does not relax because the register got shorter. *Whale*, *smart money* and
+*aped in* are guesses about who is acting and why — exactly the guesses that
+turn a measurement into a defamation risk — so the copy describes the flow and
+what is verifiable about the wallet, and nothing else. The dispatcher also
+refuses a `first_seen` event whose entry marks the recipient as returning,
+because every phrasing of that alert opens by asserting the wallet is new.
 
 Preview the copy without credentials and without sending:
 

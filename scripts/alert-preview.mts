@@ -51,6 +51,7 @@ if (process.argv.includes("--all")) {
       const x = variant.x(ctx);
       const applies = !variant.when || variant.when(ctx);
       console.log(`\n[${variant.id}]${applies ? "" : "  (gated off for this fixture)"}`);
+      console.log(`  <b>${variant.title?.(ctx) ?? "(default header)"}</b>`);
       console.log(variant.telegram(ctx).join("\n"));
       const len = x.length;
       if (len > LIMIT - 24) over++;

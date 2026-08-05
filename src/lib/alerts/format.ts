@@ -23,27 +23,30 @@ const MARK: Record<AlertEvent["kind"], string> = {
 };
 
 /**
- * Plain, because an alert arrives alone with no page around it to explain
- * itself. The schema words — `reexported`, `held` — are in the footer, under a
- * sentence that has already said what happened.
+ * Fallback headers. Most variants write their own — a header carrying the
+ * figure or the elapsed time beats a category label, and repeating one label
+ * across every post is what makes a feed look automated.
+ *
+ * Plain either way. The schema words — `reexported`, `held` — are in the
+ * footer, under a sentence that has already shown what they describe.
  */
 const HEADLINE: Record<AlertEvent["kind"], string> = {
-  arrival: "Money arrived",
-  reexport: "Money left again",
-  idle: "Still not moved",
+  arrival: "Money in",
+  reexport: "Out again",
+  idle: "Still sitting",
   first_seen: "New wallet",
 };
 
 /**
- * How we know where it came from, in words. Bridges carry a message id we can
- * match; exchange withdrawals are recognised from a labelled hot wallet, which
- * is a weaker claim. §3.2 says we state the difference rather than smooth it,
- * and an alert is one of the surfaces that has to.
+ * How we know where it came from. Bridges carry a message id we can match;
+ * exchange withdrawals are recognised from a labelled hot wallet, which is a
+ * weaker claim. §3.2 says we state the difference rather than smooth it, and an
+ * alert is one of the surfaces that has to.
  */
 const EVIDENCE: Record<string, string> = {
-  matched: "Origin confirmed against the bridge's own record",
-  attributed: "Origin identified from a known exchange wallet, not a bridge record",
-  unattributed: "Origin not confirmed — counted in the total, left out of the breakdown",
+  matched: "Origin confirmed off the bridge's own record",
+  attributed: "Caught off a known exchange wallet, no bridge record",
+  unattributed: "Origin unconfirmed — in the total, out of the breakdown",
 };
 
 /**
@@ -83,7 +86,14 @@ function buildContext(event: AlertEvent, now: number): CopyContext {
     arrived: money(e.amountUsd),
     remaining: money(Math.max(0, e.amountUsd - event.movedUsd)),
     sharePct: `${Math.round(share * 100)}%`,
-    source: isBridge ? `${e.origin} via ${e.route}` : `${article(e.origin)} ${e.origin} withdrawal`,
+    // What a gross tracker prints for a completed round trip: the leg in and
+    // the leg out, both counted.
+    roundTrip: money(event.movedUsd * 2),
+    // A venue is named on its own — "in from Binance" is how the reader
+    // already says it, and the footer states that we caught it off a hot
+    // wallet rather than a bridge record, so nothing is lost by dropping the
+    // word "withdrawal" from every sentence.
+    source: isBridge ? `${e.origin} via ${e.route}` : e.origin,
     origin: e.origin,
     originArticle: article(e.origin),
     route: e.route,
@@ -132,15 +142,16 @@ export function telegramMessage(
   const variant = pickVariant(event.kind, event.entry.id, context);
   const e = event.entry;
 
-  const history = context.firstSeen ? "no Solana history before today" : "seen on Solana before";
+  const history = context.firstSeen ? "first time on Solana" : "seen before";
   const evidence = EVIDENCE[e.confidence] ?? EVIDENCE.unattributed!;
+  const title = variant.title?.(context) ?? HEADLINE[event.kind];
 
   return [
-    `${MARK[event.kind]} <b>${escapeHtml(prefix(dataSource) + HEADLINE[event.kind])}</b>`,
+    `${MARK[event.kind]} <b>${escapeHtml(prefix(dataSource) + title)}</b>`,
     "",
     ...variant.telegram(context),
     "",
-    `Wallet <code>${escapeHtml(shortAddress(e.recipient.address))}</code> · ${history} · landed in ${context.settle}`,
+    `<code>${escapeHtml(shortAddress(e.recipient.address))}</code> · ${history} · ${context.settle} to land`,
     `${evidence} (<code>${e.confidence}</code>)`,
     "",
     context.link,

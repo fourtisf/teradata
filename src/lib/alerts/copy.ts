@@ -11,18 +11,31 @@
  * must produce the identical message rather than a second different one, and a
  * reviewer reading this file can reproduce exactly what went out.
  *
- * Register: a desk note, not a marketing post. Declarative, no exclamation, no
- * hype adjectives.
+ * ## Voice
  *
- * **Plain words, and the first line never needs a glossary.** The site can
- * afford a term of art next to a definition; an alert arrives alone on someone's
- * phone with no page around it. So: "came in", "went back out", "has not moved"
- * — not "re-exported", "idle capital", "dwell". The product's own vocabulary
- * belongs on the entry and in the API, and the footer carries it there, after
- * the plain sentence has already taught what it means.
+ * Native to the timeline it posts on. Number first, short sentences, fragments
+ * where a fragment is clearer, and none of the hedging a press release would
+ * put in. "$39.9M in from Ethereum. Out again four hours later." — that is the
+ * register, and it is shorter than the polite version rather than louder.
  *
- * The house rule (§1) is absolute here: flow and the wallet's verifiable
- * properties only. Venue and bridge names are the port, never the firm.
+ * Loud is a different thing and we do not do it: no exclamation, no all-caps,
+ * no rocket, no adjective doing work a number should do. The figures are the
+ * only interesting thing in the message and anything decorating them competes.
+ *
+ * Plain over precise in the body, precise in the footer. The first line never
+ * needs a glossary — an alert arrives alone on a phone with no page around it,
+ * so it says "gone" and "sitting" rather than "re-exported" and "idle". The
+ * schema words still travel, paired with their meaning in the footer, after a
+ * sentence has already shown what they describe.
+ *
+ * ## What the voice may not reach for
+ *
+ * §1 is not relaxed because the register got shorter. "Whale", "smart money"
+ * and "aped in" are all guesses about who is acting and why, and they are
+ * exactly the guesses that turn a measurement into a defamation risk. Describe
+ * the flow and what is verifiable about the wallet — how much, from where, seen
+ * before or not, how long it sat. Venue and bridge names are the port, never
+ * the firm.
  */
 
 import { hashSeed } from "@/lib/rng";
@@ -37,7 +50,9 @@ export interface CopyContext {
   remaining: string;
   /** "60%" of the arrival, for partial exits. */
   sharePct: string;
-  /** "Ethereum via Wormhole" or "a Binance withdrawal". */
+  /** What a gross tracker prints for a completed round trip: the amount twice. */
+  roundTrip: string;
+  /** "Ethereum via Wormhole" or "Binance". */
   source: string;
   /** "Ethereum" or "Binance". */
   origin: string;
@@ -46,7 +61,7 @@ export interface CopyContext {
   /** "Wormhole", or "withdrawal" for a venue. */
   route: string;
   isBridge: boolean;
-  /** "a wallet we have seen on Solana before". */
+  /** "a wallet with no Solana history before today". */
   wallet: string;
   firstSeen: boolean;
   /** "6.4s". */
@@ -69,6 +84,8 @@ interface Variant {
   id: string;
   /** Only offered when the event actually has this property. */
   when?: (c: CopyContext) => boolean;
+  /** Telegram header. Falls back to the per-kind default in format.ts. */
+  title?: (c: CopyContext) => string;
   /** Telegram body lines. The header and footer are added by the formatter. */
   telegram: (c: CopyContext) => string[];
   x: (c: CopyContext) => string;
@@ -78,49 +95,52 @@ interface Variant {
  * Money that came in and then left again.
  *
  * The whole method exists to catch this, so the copy is allowed to say why it
- * matters — but it has to say what happened first, in words that need nothing
- * explained.
+ * matters — in one clause, at the end, after the event.
  * ---------------------------------------------------------------------- */
 const REEXPORT: Variant[] = [
   {
     id: "round-trip-closed",
     when: (c) => !c.partial,
+    title: (c) => `Out again after ${c.onChain}`,
     telegram: (c) => [
-      `<b>${c.amount}</b> came in from ${c.source} and has now gone straight back off Solana.`,
-      `It was here for ${c.onChain}. Money that leaves again was never money that arrived, so today's "still on Solana" figure drops by the same amount.`,
+      `<b>${c.amount}</b> in from ${c.source}. ${c.onChain} later it is gone.`,
+      `Money that leaves again was never money that arrived. Today's "still on Solana" figure drops by the same amount.`,
     ],
     x: (c) =>
-      `${c.amount} came into Solana from ${c.source} and went back out ${c.onChain} later. Volume charts count that round trip twice. We count it as nothing arriving.`,
+      `${c.amount} in from ${c.source}. Out again ${c.onChain} later. Volume charts count that trip twice. We count it zero.`,
   },
   {
     id: "gross-vs-net",
     when: (c) => !c.partial && c.large,
+    title: () => "Round trip",
     telegram: (c) => [
-      `<b>${c.amount}</b> bridged in from ${c.origin}. It has now bridged back out.`,
-      `Nothing new stayed on the chain. Most trackers will show ${c.amount} in and ${c.amount} out, and call both of them volume.`,
+      `<b>${c.amount}</b> bridged in from ${c.origin}. Bridged straight back out.`,
+      `Nothing stayed. Elsewhere the same trip prints as ${c.roundTrip} of volume.`,
     ],
     x: (c) =>
-      `${c.amount} bridged into Solana from ${c.origin} and has now bridged back out. Elsewhere that reads as volume in both directions. Here it reads as no new money at all.`,
+      `${c.amount} bridged into Solana from ${c.origin}, then straight back out. Nothing stayed. Elsewhere the same round trip prints as ${c.roundTrip} of volume.`,
   },
   {
     id: "partial-exit",
     when: (c) => c.partial,
+    title: (c) => `${c.sharePct} of it left`,
     telegram: (c) => [
-      `<b>${c.arrived}</b> came in from ${c.source}. <b>${c.amount}</b> of it has already gone back off Solana — ${c.sharePct} of the arrival.`,
-      `The other ${c.remaining} is still here, and still counts as money that stayed.`,
+      `<b>${c.arrived}</b> in from ${c.source}. <b>${c.amount}</b> already back out — ${c.sharePct}.`,
+      `${c.remaining} stayed. That is the part we count.`,
     ],
     x: (c) =>
-      `${c.arrived} came into Solana from ${c.source}, and ${c.sharePct} of it — ${c.amount} — has already gone back out. The other ${c.remaining} is still here and still counts.`,
+      `${c.arrived} in from ${c.source}. ${c.amount} already back out — ${c.sharePct} of it. ${c.remaining} stayed, and that is the only part we count.`,
   },
   {
     id: "timed",
     when: (c) => !c.partial,
+    title: (c) => `${c.onChain} on chain`,
     telegram: (c) => [
-      `<b>${c.amount}</b> landed at ${c.arrivedAt} from ${c.source}. It has already left Solana.`,
-      `Total time on the chain: ${c.onChain}.`,
+      `<b>${c.amount}</b> landed at ${c.arrivedAt} from ${c.source}. Already gone.`,
+      `Round trip, not inflow. It never counted as money that arrived.`,
     ],
     x: (c) =>
-      `${c.amount} landed on Solana at ${c.arrivedAt} from ${c.source} and is already gone. Total time on the chain: ${c.onChain}.`,
+      `${c.amount} landed on Solana at ${c.arrivedAt} from ${c.source}. Already gone — ${c.onChain} on chain, start to finish. Round trip, not inflow.`,
   },
 ];
 
@@ -130,90 +150,98 @@ const REEXPORT: Variant[] = [
 const ARRIVAL: Variant[] = [
   {
     id: "plain",
+    title: (c) => `${c.amount} in`,
     telegram: (c) => [
-      `<b>${c.amount}</b> just arrived on Solana from ${c.source}, landing in ${c.settle}.`,
-      `We watch this wallet for the next 24 hours. Whether the money stays is the part we report.`,
+      `From ${c.source}, landed in ${c.settle}.`,
+      `24-hour clock starts now. Whether it stays is the only part that counts.`,
     ],
     x: (c) =>
-      `${c.amount} just arrived on Solana from ${c.source}, landing in ${c.settle}. We watch it for the next 24 hours — whether it stays is the part that counts.`,
+      `${c.amount} into Solana from ${c.source}, landed in ${c.settle}. 24-hour clock starts now — whether it stays is the only part that counts.`,
   },
   {
     id: "attribution-note",
     when: (c) => !c.isBridge,
+    title: (c) => `${c.amount} out of ${c.origin}`,
     telegram: (c) => [
-      `<b>${c.amount}</b> left ${c.originArticle} ${c.origin} exchange wallet and landed on a Solana address that is not an exchange.`,
-      `We spotted this by recognising the exchange's own wallet, not by reading a bridge record. That is weaker evidence, and the entry says so.`,
+      `Into a Solana address that is not an exchange.`,
+      `Caught off the hot wallet, not a bridge record. Weaker proof, and we tag it that way on the entry.`,
     ],
     x: (c) =>
-      `${c.amount} moved out of ${c.originArticle} ${c.origin} exchange wallet onto Solana. Spotted by recognising the exchange's wallet, not from a bridge record — weaker evidence, and we label it.`,
+      `${c.amount} out of ${c.origin} and onto Solana. Caught off the hot wallet, not a bridge record — weaker proof, and every entry says which one it is.`,
   },
   {
     id: "matched-note",
     when: (c) => c.isBridge,
+    title: (c) => `${c.amount} in from ${c.origin}`,
     telegram: (c) => [
-      `<b>${c.amount}</b> arrived from ${c.origin} over ${c.route}.`,
-      `We matched it to the original deposit on the other chain using ${c.route}'s own transfer ID, so the ${c.settle} it took is measured rather than estimated.`,
+      `Over ${c.route}, matched to the deposit on the other side by the bridge's own transfer ID.`,
+      `Which is why the ${c.settle} is measured and not a guess.`,
     ],
     x: (c) =>
-      `${c.amount} arrived on Solana from ${c.origin} over ${c.route}. Matched to the deposit on the other side using the bridge's own transfer ID, so the ${c.settle} is measured, not a guess.`,
+      `${c.amount} into Solana from ${c.origin} over ${c.route}. Matched to the deposit on the other side by the bridge's own ID, so the ${c.settle} is measured, not a guess.`,
   },
   {
     id: "size",
     when: (c) => c.large,
+    title: (c) => `${c.amount}, one transfer`,
     telegram: (c) => [
-      `<b>${c.amount}</b> arrived from ${c.source} in one go — one of the biggest single arrivals on Solana today.`,
-      `It landed in ${c.settle}, and counts as money that stayed until something moves it.`,
+      `In from ${c.source}, landed in ${c.settle}. One of the biggest single arrivals on Solana today.`,
+      `Counts as money that stayed until something moves it.`,
     ],
     x: (c) =>
-      `${c.amount} arrived on Solana from ${c.source} in a single transfer, landing in ${c.settle}. One of the largest single arrivals on the chain today.`,
+      `${c.amount} into Solana from ${c.source} in one transfer, landed in ${c.settle}. One of the largest single arrivals on the chain today.`,
   },
   {
     id: "slow-settle",
     when: (c) => c.slowSettle && c.isBridge,
+    title: (c) => `${c.amount} in, ${c.settle} to land`,
     telegram: (c) => [
-      `<b>${c.amount}</b> arrived from ${c.origin} over ${c.route}, but took ${c.settle} to land — slower than this route usually runs.`,
-      `We know that because we matched it to the original deposit, so the delay is measured rather than guessed at.`,
+      `From ${c.origin} over ${c.route}. Slower than this route usually runs.`,
+      `Matched to the origin deposit, so that lag is measured rather than estimated.`,
     ],
     x: (c) =>
-      `${c.amount} from ${c.origin} over ${c.route} took ${c.settle} to land — slower than this route usually runs. Matched to the original deposit, so that delay is measured.`,
+      `${c.amount} from ${c.origin} over ${c.route} took ${c.settle} to land — slower than this route usually runs. Matched to the origin deposit, so the lag is measured.`,
   },
 ];
 
 /* -------------------------------------------------------------------------
  * Money that arrived and has not done anything yet.
  *
- * "Idle capital" is the phrase on the site. It is not a phrase that explains
- * itself on a phone, so every variant here spells out what did not happen —
- * no swap, no deposit, no transfer — before it reaches for the idea.
+ * "Idle capital" is the phrase on the site and it does not explain itself on a
+ * phone. Every variant here spells out what did not happen — no swap, no
+ * deposit, no transfer — before it reaches for the idea.
  * ---------------------------------------------------------------------- */
 const IDLE: Variant[] = [
   {
     id: "dry-powder",
+    title: (c) => `${c.dwell}, no moves`,
     telegram: (c) => [
-      `<b>${c.amount}</b> arrived from ${c.source} and has not moved for ${c.dwell}.`,
-      `Not swapped, not lent out, not sent anywhere. It is buying power sitting on the chain that has not been used yet.`,
+      `<b>${c.amount}</b> in from ${c.source} and it has not moved since.`,
+      `No swap, no deposit, no transfer out. Dry powder, still sitting.`,
     ],
     x: (c) =>
-      `${c.amount} arrived on Solana from ${c.source} ${c.dwell} ago and still has not moved. Not swapped, not lent, not sent on. Buying power that has not been spent yet.`,
+      `${c.amount} into Solana from ${c.source} ${c.dwell} ago. Zero moves since. No swap, no deposit, no transfer out. Dry powder, still sitting.`,
   },
   {
     id: "no-action",
+    title: () => "Still sitting",
     telegram: (c) => [
-      `${c.dwell} on Solana and still nothing: <b>${c.amount}</b> from ${c.source} is sitting exactly where it landed.`,
-      `The wallet has not swapped it, deposited it, or sent it on.`,
+      `${c.dwell} on Solana and nothing: <b>${c.amount}</b> from ${c.source} is exactly where it landed.`,
+      `Not swapped, not deposited, not sent on.`,
     ],
     x: (c) =>
-      `${c.dwell} on Solana and still nothing: ${c.amount} from ${c.source} is sitting exactly where it landed. Not swapped, not deposited, not sent on.`,
+      `${c.dwell} on Solana and nothing: ${c.amount} from ${c.source} is exactly where it landed. Not swapped, not deposited, not sent on.`,
   },
   {
     id: "unspent-large",
     when: (c) => c.large,
+    title: (c) => `${c.amount}, untouched`,
     telegram: (c) => [
-      `<b>${c.amount}</b> from ${c.source} is still untouched ${c.dwell} after landing.`,
-      `No swap, no deposit, no transfer out — nothing at all. Money that arrived to be spent, and has not been spent.`,
+      `${c.dwell} since it landed from ${c.source}. Nothing has touched it.`,
+      `No swap, no deposit, no transfer out. Money that came in to be spent and has not been.`,
     ],
     x: (c) =>
-      `${c.amount} from ${c.source} is still untouched ${c.dwell} after landing. No swap, no deposit, no transfer out. Money that arrived to be spent and hasn't been.`,
+      `${c.amount} from ${c.source} still untouched ${c.dwell} after landing. No swap, no deposit, no transfer out. Came in to be spent, hasn't been.`,
   },
 ];
 
@@ -223,31 +251,34 @@ const IDLE: Variant[] = [
 const FIRST_SEEN: Variant[] = [
   {
     id: "no-history",
+    title: () => "Fresh wallet",
     telegram: (c) => [
-      `A wallet that had never touched Solana before today just received <b>${c.amount}</b> from ${c.source}.`,
-      `It landed in ${c.settle}. We will report the first thing this wallet does with it.`,
+      `Zero Solana history before today. Just took <b>${c.amount}</b> from ${c.source}.`,
+      `Landed in ${c.settle}. We post whatever it touches first.`,
     ],
     x: (c) =>
-      `A wallet with no Solana history at all just received ${c.amount} from ${c.source}. We will report the first thing it does with the money.`,
+      `Fresh wallet, zero Solana history before today, just took ${c.amount} from ${c.source}. We post whatever it touches first.`,
   },
   {
     id: "funded",
+    title: (c) => `New wallet, ${c.amount} in`,
     telegram: (c) => [
-      `New wallet, funded with <b>${c.amount}</b> from ${c.source}.`,
-      `Nothing on Solana before today. We are watching for what it buys, lends or stakes first.`,
+      `Funded from ${c.source}. Nothing on Solana before today.`,
+      `Watching for what it buys, lends or stakes first.`,
     ],
     x: (c) =>
-      `New Solana wallet, funded with ${c.amount} from ${c.source}. Nothing on this chain before today. Watching for what it does first.`,
+      `New Solana wallet funded with ${c.amount} from ${c.source}. Nothing on this chain before today. Watching what it does first.`,
   },
   {
     id: "size",
     when: (c) => c.large,
+    title: (c) => `${c.amount} to a brand new address`,
     telegram: (c) => [
-      `<b>${c.amount}</b> from ${c.source} went to an address that did not exist on Solana yesterday.`,
-      `That is new money coming in, not money moving around inside the chain. Landed in ${c.settle}, first move still to come.`,
+      `From ${c.source}, to an address that did not exist on Solana yesterday.`,
+      `New money coming in, not money rotating inside the chain. Landed in ${c.settle}, first move still to come.`,
     ],
     x: (c) =>
-      `${c.amount} from ${c.source} went to an address that did not exist on Solana yesterday. New money coming in, not money moving around inside the chain.`,
+      `${c.amount} from ${c.source} went to an address that did not exist on Solana yesterday. New money coming in, not money rotating inside the chain.`,
   },
 ];
 
