@@ -50,7 +50,12 @@ const check = (label: string, ok: boolean, detail = "") => {
 const group = (title: string) => console.log(`\n${title}`);
 
 await query(await readFile("deploy/postgres/schema.sql", "utf8"));
-await query("TRUNCATE arrivals, daily_flows, wallets, entities CASCADE");
+// indexer_state too, and it is the easy one to forget: stampHeartbeat keeps
+// the highest slot it has seen, so a leftover row from a previous run makes
+// the heartbeat checks fail on the second invocation and pass on the first.
+// A suite that only passes against a fresh database is a suite that will lie
+// to somebody later.
+await query("TRUNCATE arrivals, daily_flows, wallets, entities, indexer_state CASCADE");
 
 const TS = (iso: string) => new Date(iso);
 const base = (over: Partial<SettlementInput> = {}): SettlementInput => ({
