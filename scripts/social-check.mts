@@ -288,28 +288,58 @@ group("composition");
 /* -------------------------------------------------------------------------
  * The guard. The one that has to hold whatever else is wrong.
  * ---------------------------------------------------------------------- */
-group("simulated-data guard");
-if (ALLOW_SIMULATED) {
-  // Not a failure — it is the escape hatch being open, which is exactly what
-  // `alert-test.mts` asks you to do while testing into a private channel. Say
-  // so rather than reporting a red check the reader then has to explain.
-  console.log("  skipped: ALERTS_ALLOW_SIMULATED=true in this shell. Unset it to check the guard.");
-} else {
+/**
+ * `ALERTS_ALLOW_SIMULATED` is read at module load, so this script cannot move
+ * it — which turns out to be the right shape anyway. Each setting has its own
+ * thing to prove, and running the script both ways checks both halves:
+ *
+ *   npm run social:check                             the blanket refusal
+ *   ALERTS_ALLOW_SIMULATED=true npm run social:check  X still held back
+ */
+group(ALLOW_SIMULATED ? "simulated-data guard, hatch open" : "simulated-data guard");
+{
   const now = Date.parse("2026-08-03T00:20:30Z");
-  const outcomes = await runDue({
-    provider: new SimProvider({ now: () => now }),
-    ledger: memoryLedger(),
-    now,
-    specs: SPECS,
-  });
+  const run = (extra: Parameters<typeof runDue>[0] = {}) =>
+    runDue({
+      provider: new SimProvider({ now: () => now }),
+      ledger: memoryLedger(),
+      now,
+      specs: SPECS,
+      ...extra,
+    });
 
+  const outcomes = await run();
   check("the guard produced outcomes", outcomes.length > 0);
   check("nothing was delivered", outcomes.every((o) => !o.ok));
-  check(
-    "and the reason is the simulated figures",
-    outcomes.every((o) => o.reason?.startsWith("refused: figures are simulated")),
-    outcomes.map((o) => o.reason).join(" | "),
-  );
+
+  if (!ALLOW_SIMULATED) {
+    check(
+      "and every channel is refused for the simulated figures",
+      outcomes.every((o) => o.reason?.startsWith("refused: figures are simulated")),
+      outcomes.map((o) => o.reason).join(" | "),
+    );
+  } else {
+    // The hatch was written for a private Telegram channel. X does not have
+    // one, so opening it must not open both.
+    const x = outcomes.filter((o) => o.channel === "x");
+    const telegram = outcomes.filter((o) => o.channel === "telegram");
+    check("X is held back for being public", x.length > 0 && x.every((o) => o.reason?.includes("X is public")), x.map((o) => o.reason).join(" | "));
+    check(
+      "Telegram is not held back for that reason",
+      telegram.every((o) => !o.reason?.includes("X is public")),
+      telegram.map((o) => o.reason).join(" | "),
+    );
+
+    // And --public is what lifts it — the flag a person types after reading
+    // why. Past the refusal it stops at credentials, which is far enough.
+    const forced = await run({ allowSimulatedPublic: true });
+    const forcedX = forced.filter((o) => o.channel === "x");
+    check(
+      "--public gets X past the refusal",
+      forcedX.length > 0 && forcedX.every((o) => !o.reason?.includes("X is public")),
+      forcedX.map((o) => o.reason).join(" | "),
+    );
+  }
 }
 
 console.log(

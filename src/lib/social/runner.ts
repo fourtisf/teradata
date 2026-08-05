@@ -57,6 +57,21 @@ export interface RunOptions {
   dryRun?: boolean;
   /** Narrow the channels further than `SOCIAL_CHANNELS` does. */
   only?: Channel[];
+  /**
+   * Publish simulated figures to X. Ignored once the data is real.
+   *
+   * `ALERTS_ALLOW_SIMULATED` exists so the delivery path can be tested into a
+   * *private* Telegram channel, where a mistake is recoverable. X has no
+   * private target — @TareData_ is public, and an invented dollar amount
+   * published under the brand is precisely what §1 says cannot be undone by
+   * fixing the data afterwards. Deleting it does not help: it was live, and it
+   * was screenshottable.
+   *
+   * So the one env var does not unlock both channels. `alert-test.mts` makes a
+   * person type `--public` for the same reason; this is that refusal, in the
+   * path that runs unattended.
+   */
+  allowSimulatedPublic?: boolean;
   /** Override the schedule. The check script drives a year through this. */
   specs?: JobSpec[];
 }
@@ -167,6 +182,19 @@ export async function runDue(options: RunOptions = {}): Promise<PostOutcome[]> {
     let built = false;
 
     for (const channel of remaining) {
+      // The second half of the guard. The first refused everything unless
+      // ALERTS_ALLOW_SIMULATED was set; this one holds X back even then,
+      // because that switch was written for a private Telegram channel and X
+      // does not have one.
+      if (provider.source === "sim" && channel === "x" && !options.allowSimulatedPublic) {
+        results.push(
+          outcome(occurrence, channel, false, {
+            reason: "refused: X is public and these figures are simulated (--public to override)",
+          }),
+        );
+        continue;
+      }
+
       const attemptKey = `${occurrence.key}:${channel}`;
       const tried = Math.max(
         await ledger.attempts(occurrence.key, channel, now),

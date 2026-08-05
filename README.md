@@ -235,7 +235,15 @@ or 48h the settled date follows without a code change.
 ### What stops it publishing
 
 The same simulated-data guard as the alert path — one switch, both halves — and
-four more, in `runner.ts`:
+that switch **does not open X**. `ALERTS_ALLOW_SIMULATED=true` exists so the
+delivery path can be tested into a *private* Telegram channel, where a mistake
+is recoverable. There is no private tweet: `@TareData_` is public, so a test
+post is public, and an invented dollar amount published under the brand is what
+§1 says cannot be undone by fixing the data afterwards. `--public` overrides it
+and exists so the flag is typed by someone who has read that sentence, which is
+the same bargain `alert-test.mts` already makes.
+
+Then four more, in `runner.ts`:
 
 - **The indexer is down.** A total drawn across a gap is wrong in the direction
   that flatters us.
@@ -302,9 +310,15 @@ throwing would lose a post.
 
 ```bash
 npm run social:check     # the clock, the ledger, the budget, the guard
+ALERTS_ALLOW_SIMULATED=true npm run social:check   # …and that X stays shut
 npm run social:preview   # a fortnight of dailies and the weekly, as they would post
 npm run social:preview -- --all   # every variant forced, including the rose one
 ```
+
+`social:check` is run both ways on purpose. `ALERTS_ALLOW_SIMULATED` is read at
+module load so the script cannot move it, and each setting has its own thing to
+prove: closed, every channel is refused; open, X is still held back for being
+public and `--public` is what lifts it.
 
 `social:check` drives ninety days of ten-minute ticks through the real schedule
 and asserts one occurrence per day, twelve hours of lateness and no more, and

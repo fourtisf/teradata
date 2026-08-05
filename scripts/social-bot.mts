@@ -28,6 +28,15 @@
  * `DATA_SOURCE=sim` refuses everything before it formats anything. That is the
  * expected state today and the log says so on every tick that would have
  * posted.
+ *
+ * `ALERTS_ALLOW_SIMULATED=true` lifts that for testing, and lifts it for
+ * Telegram only. There is no private tweet: @TareData_ is public, so a test
+ * post is public, and an invented dollar amount published under the brand is
+ * the damage §1 says cannot be undone by fixing the data afterwards. Deleting
+ * it does not unpublish it.
+ *
+ * `--public` overrides that, and exists so the flag is typed by someone who has
+ * read this paragraph. It does nothing once the figures are real.
  */
 import { getDataProvider } from "@/lib/data";
 import { ALLOW_SIMULATED } from "@/lib/alerts/config";
@@ -61,6 +70,7 @@ if (channel && channel !== "telegram" && channel !== "x") {
 const only = channel ? ([channel] as Channel[]) : undefined;
 const dryRun = has("dry-run");
 const once = has("once");
+const allowSimulatedPublic = has("public");
 
 const atFlag = value("at");
 const at = atFlag ? Date.parse(atFlag) : null;
@@ -99,6 +109,15 @@ if (provider.source === "sim" && !ALLOW_SIMULATED) {
   log("  Nothing will be published: DATA_SOURCE=sim and ALERTS_ALLOW_SIMULATED");
   log("  is not true. That is the guard, not a fault. The process stays up so");
   log("  the schedule can be watched — set DATA_SOURCE=live when P1 lands.");
+} else if (provider.source === "sim" && !allowSimulatedPublic) {
+  log("");
+  log("  Telegram only: the figures are simulated and X is public. Point");
+  log("  TELEGRAM_CHAT_ID at a private channel first. --public overrides this");
+  log("  and publishes an invented dollar amount under the brand.");
+} else if (provider.source === "sim") {
+  log("");
+  log("  --public with simulated figures. Every message carries [SIMULATED],");
+  log("  and a screenshot does not. This will be visible on the timeline.");
 }
 
 for (const spec of activeSpecs()) {
@@ -115,7 +134,7 @@ for (const c of only ?? ENABLED_CHANNELS) {
 
 async function tick() {
   try {
-    const outcomes = await runDue({ dryRun, only, now: clock() });
+    const outcomes = await runDue({ dryRun, only, allowSimulatedPublic, now: clock() });
     // Silence is the normal state — most ticks have nothing due — so it is only
     // worth a line on a one-shot run, where it is the difference between "no
     // post is owed" and "the process did not get that far".
