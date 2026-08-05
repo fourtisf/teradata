@@ -76,26 +76,30 @@ export class FileLedger implements PostLedger {
   constructor(private readonly dir: string = LEDGER_DIR) {}
 
   /**
-   * A dedupe key is at most days old, so the current month plus the previous
-   * one covers every case including a post due at 00:05 on the 1st.
+   * The two months either side of `at`.
+   *
+   * A dedupe key is at most days old, so the month containing `at` plus the one
+   * before it covers every case including a post due at 00:05 on the 1st. It is
+   * `at` and not `Date.now()` on purpose: `record` files by the instant the
+   * caller gave it, and a reader working from wall-clock time would miss its
+   * own write the moment the two fell in different months.
    */
-  private async recent(): Promise<PostRecord[]> {
-    const now = Date.now();
-    const previous = Date.parse(`${utcMonth(now)}-01T00:00:00.000Z`) - 1;
+  private async recent(at: number): Promise<PostRecord[]> {
+    const previous = Date.parse(`${utcMonth(at)}-01T00:00:00.000Z`) - 1;
     const [thisMonth, lastMonth] = await Promise.all([
-      readRecords(fileFor(this.dir, now)),
+      readRecords(fileFor(this.dir, at)),
       readRecords(fileFor(this.dir, previous)),
     ]);
     return [...lastMonth, ...thisMonth];
   }
 
-  async has(key: string, channel: Channel): Promise<boolean> {
-    const records = await this.recent();
+  async has(key: string, channel: Channel, at: number): Promise<boolean> {
+    const records = await this.recent(at);
     return records.some((r) => r.ok && r.key === key && r.channel === channel);
   }
 
-  async attempts(key: string, channel: Channel): Promise<number> {
-    const records = await this.recent();
+  async attempts(key: string, channel: Channel, at: number): Promise<number> {
+    const records = await this.recent(at);
     return records.filter((r) => r.key === key && r.channel === channel).length;
   }
 
@@ -129,11 +133,11 @@ export function softLedger(ledger: PostLedger, onError?: (error: Error) => void)
     }
   };
   return {
-    has: (key, channel) => soften(() => ledger.has(key, channel), false),
+    has: (key, channel, at) => soften(() => ledger.has(key, channel, at), false),
     // Zero, not a large number: a read fault must not look like exhausted
     // retries and suppress a post. The runner keeps its own in-process count as
     // the backstop, so a broken ledger still cannot retry forever.
-    attempts: (key, channel) => soften(() => ledger.attempts(key, channel), 0),
+    attempts: (key, channel, at) => soften(() => ledger.attempts(key, channel, at), 0),
     countMonth: (channel, at) => soften(() => ledger.countMonth(channel, at), 0),
     record: (record) => soften(() => ledger.record(record), undefined),
   };
@@ -143,6 +147,7 @@ export function softLedger(ledger: PostLedger, onError?: (error: Error) => void)
 export function memoryLedger(): PostLedger {
   const records: PostRecord[] = [];
   return {
+    // No `at` needed: everything ever recorded is still in the array.
     async has(key, channel) {
       return records.some((r) => r.ok && r.key === key && r.channel === channel);
     },

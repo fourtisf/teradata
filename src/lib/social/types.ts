@@ -104,10 +104,18 @@ export interface PostRecord {
  * at 00:06 would repost the recap that went out at 00:05.
  */
 export interface PostLedger {
-  /** True only if this key was *successfully* delivered on this channel. */
-  has(key: string, channel: Channel): Promise<boolean>;
+  /**
+   * True only if this key was *successfully* delivered on this channel.
+   *
+   * `at` is the instant the caller is reasoning about, not necessarily now. A
+   * file-backed implementation files a record under the month of its `at`, so
+   * a reader that assumed wall-clock time would look in the wrong month the
+   * moment anything moved the clock — and a write the dedupe cannot see is a
+   * second post.
+   */
+  has(key: string, channel: Channel, at: number): Promise<boolean>;
   /** Every attempt at this key on this channel, successful or not. */
-  attempts(key: string, channel: Channel): Promise<number>;
+  attempts(key: string, channel: Channel, at: number): Promise<number>;
   /** Successful posts on a channel in the UTC month containing `at`. */
   countMonth(channel: Channel, at: number): Promise<number>;
   record(record: PostRecord): Promise<void>;

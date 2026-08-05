@@ -12,8 +12,11 @@
  * `social-preview.mts` reads the copy; this one checks the clock, the ledger,
  * the budget and the guard.
  */
+import { mkdtemp, readdir, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { capFor, checkBudget } from "@/lib/social/budget";
-import { memoryLedger } from "@/lib/social/ledger";
+import { FileLedger, memoryLedger } from "@/lib/social/ledger";
 import { buildPost, runDue } from "@/lib/social/runner";
 import {
   dueOccurrences,
@@ -177,6 +180,38 @@ group("ledger");
     "and the count is per calendar month",
     (await ledger.countMonth("x", Date.parse("2026-09-01T00:00:00Z"))) === 0,
   );
+}
+
+/* -------------------------------------------------------------------------
+ * The file-backed ledger, against a real directory.
+ *
+ * `memoryLedger` above cannot catch the failure this group exists for: the
+ * file implementation shards by UTC month, so a write and the dedupe read that
+ * follows it have to agree on which month they are in. When they did not, the
+ * read looked in the wrong file, found nothing, and the recap went out twice.
+ * ---------------------------------------------------------------------- */
+group("file ledger");
+{
+  const dir = await mkdtemp(join(tmpdir(), "tare-ledger-"));
+  const ledger = new FileLedger(dir);
+  const august = Date.parse("2026-08-20T00:05:00Z");
+  const september = Date.parse("2026-09-01T00:05:00Z");
+
+  await ledger.record({ key: "daily:2026-08-20", channel: "x", purpose: "scheduled", ok: true, at: new Date(august).toISOString() });
+  check("a record survives a round trip to disk", await ledger.has("daily:2026-08-20", "x", august));
+  check("and is not confused with another channel", !(await ledger.has("daily:2026-08-20", "telegram", august)));
+
+  // The first of the month, reading back a post written on the last day of the
+  // one before. This is the case the sharding has to get right.
+  await ledger.record({ key: "daily:2026-09-01", channel: "x", purpose: "scheduled", ok: true, at: new Date(september).toISOString() });
+  check("a post written this month is found this month", await ledger.has("daily:2026-09-01", "x", september));
+  check("and last month's is still visible from the 1st", await ledger.has("daily:2026-08-20", "x", september));
+
+  check("the budget counts August's alone", (await ledger.countMonth("x", august)) === 1);
+  check("and September's alone", (await ledger.countMonth("x", september)) === 1);
+  check("two month files were written", (await readdir(dir)).sort().join(",") === "posts-2026-08.ndjson,posts-2026-09.ndjson", (await readdir(dir)).join(","));
+
+  await rm(dir, { recursive: true, force: true });
 }
 
 /* -------------------------------------------------------------------------

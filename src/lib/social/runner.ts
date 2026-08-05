@@ -139,7 +139,7 @@ export async function runDue(options: RunOptions = {}): Promise<PostOutcome[]> {
   for (const occurrence of occurrences) {
     const remaining: Channel[] = [];
     for (const channel of channels) {
-      if (await ledger.has(occurrence.key, channel)) {
+      if (await ledger.has(occurrence.key, channel, now)) {
         results.push(outcome(occurrence, channel, false, { reason: "already posted" }));
       } else {
         remaining.push(channel);
@@ -169,7 +169,7 @@ export async function runDue(options: RunOptions = {}): Promise<PostOutcome[]> {
     for (const channel of remaining) {
       const attemptKey = `${occurrence.key}:${channel}`;
       const tried = Math.max(
-        await ledger.attempts(occurrence.key, channel),
+        await ledger.attempts(occurrence.key, channel, now),
         localAttempts.get(attemptKey) ?? 0,
       );
       if (tried >= MAX_ATTEMPTS) {
