@@ -15,7 +15,7 @@ strip reads `Simulated`, a preview banner says so on every page, and
 | Phase | State |
 |---|---|
 | P0 — skeleton, simulated data | done |
-| P1 — Solana ingest | not started, see *What P1 needs* below |
+| P1 — Solana ingest | store and schema done and tested; the Helius subscription needs a key, see *What P1 needs* |
 | P2–P3 — correlation, re-export | not started |
 | P4 — product surface | done ahead of schedule (range, chart, traces, coverage, status) |
 | P5 — retention | daily card done as the OG generator; alert delivery and the scheduled poster done, both refused until data is real |
@@ -56,6 +56,11 @@ npm run social:check   # the scheduler's tests — clock, ledger, budget, guard
 npm run social:preview # every scheduled post, rendered, nothing sent
 npm run alerts:preview # every alert variant, rendered, nothing sent
 npm run telegram:webhook -- --info   # where Telegram is delivering bot commands
+```
+
+```bash
+createdb tare_test
+POSTGRES_URL=postgres:///tare_test npm run db:check   # the store, against real SQL
 ```
 
 Deploys to Vercel with no configuration. `DATA_SOURCE` defaults to `sim`, so a
@@ -361,6 +366,47 @@ and asserts one occurrence per day, twelve hours of lateness and no more, and
 that a three-day outage yields one post rather than three. `social:preview`
 exits non-zero if any X post would break 280 once a t.co link is counted, or any
 Telegram post would break the caption limit that lets the card be attached.
+
+## The store
+
+`src/lib/db/` is the write side of P1 — what the Helius subscription lands on
+once there is a key for it. The transport is replaceable; the rules are not, so
+they live here rather than in the worker, and every one of them is enforced in
+SQL rather than trusted to a caller:
+
+- **A replay cannot double-count.** `arrivals` is upserted on
+  `(solana_tx, instruction_index)`. A restarted stream re-delivers whole slots,
+  and the transaction alone is the wrong key — one bridge settlement can carry
+  several transfers, and keying on the transaction would lose all but the first.
+- **A replay cannot weaken what is known.** An arrival already matched to its
+  origin deposit stays matched; a row already priced stays priced.
+- **An unpriced arrival is stored as null, never `$0`.** §11 closed this: a zero
+  understates the headline while looking like a complete figure.
+- **A closed window stays closed.** §3.4 makes a row mutable for 24 hours and
+  history afterwards, so a late re-export or first-use write is refused rather
+  than silently moving a published day.
+- **Partial exits are proportional.** `reexported_usd` accumulates and clamps at
+  what arrived; only a full exit makes the arrival a re-export.
+
+`indexer_state` is a separate signal from all of that, and the reason is worth
+stating: deriving "is the indexer up" from how recently something arrived calls
+a quiet Sunday an outage and calls a stalled stream healthy for as long as its
+backlog lasts. The worker stamps a heartbeat on every slot it processes,
+whether or not anything arrived in it, and liveness is the age of that stamp.
+
+```bash
+createdb tare_test
+POSTGRES_URL=postgres:///tare_test npm run db:check
+```
+
+The check applies `deploy/postgres/schema.sql` first, so the schema is verified
+by being used rather than by being read. It refuses a connection string that
+does not say `test`, because it truncates.
+
+`LiveProvider.getStatus()` is wired to those tables — §P1's "freshness and slot
+indicators wired to real values". **Every other method still throws**, so a
+build pointed at `live` fails on the first page it renders rather than serving a
+figure from a half-filled database.
 
 ## What is verified
 

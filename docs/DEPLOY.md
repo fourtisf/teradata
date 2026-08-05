@@ -56,6 +56,27 @@ Two processes come up: **tare** (the site) and **tare-social** (the scheduled
 poster). The poster publishes nothing while `DATA_SOURCE=sim` — it says so in
 its first ten lines of log and stays up so the schedule can be watched.
 
+## Postgres
+
+One database, for both the flow store and the app tables — §11 records why the
+column store was dropped.
+
+```bash
+apt-get install -y postgresql
+su - postgres -c "createuser tare --pwprompt && createdb tare --owner tare"
+
+cd /var/www/tare
+# Idempotent, and safe to re-run after every deploy that changes it.
+psql "postgres://tare:PASSWORD@127.0.0.1:5432/tare" -f deploy/postgres/schema.sql
+
+# Then add to .env.local, and restart (server-side, so no rebuild needed):
+#   POSTGRES_URL=postgres://tare:PASSWORD@127.0.0.1:5432/tare
+```
+
+Leave `DATA_SOURCE=sim` until the indexer is actually writing. The app throws
+rather than serving numbers it cannot stand behind, and an empty database is
+exactly the case where that matters.
+
 ## nginx
 
 ```bash
