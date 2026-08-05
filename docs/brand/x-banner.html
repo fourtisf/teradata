@@ -5,25 +5,33 @@
 @font-face{font-family:"JBMono";src:url(data:font/woff2;base64,__MONO__) format("woff2");font-weight:400 700;font-display:block}
 :root{
   --bg:#0C0718; --txt:#F1EDFF; --txt-2:#948BB4; --txt-3:#6B6390;
-  --violet:#7C5CFF; --violet-tint:rgba(124,92,255,.34); --rose:#F87189;
+  --violet:#7C5CFF; --violet-tint:rgba(124,92,255,.30); --rose:#F87189;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#222;font-family:"Jakarta",sans-serif}
 .plate{position:relative;overflow:hidden;background:var(--bg);width:1500px;height:500px;margin-bottom:24px}
 
+/* The lockup ends at y=324. X drops a 334px avatar circle whose top edge is
+   y=333, so this is the clearance and it is asserted by the guides plate
+   rather than eyeballed. */
 .lock{position:absolute;left:112px;top:62px}
 .eyebrow{display:block;font-family:"JBMono",monospace;font-size:16px;font-weight:500;
-  letter-spacing:.30em;text-transform:uppercase;color:var(--txt-3)}
-.word{display:block;font-family:"Sora",sans-serif;font-weight:600;font-size:104px;
-  letter-spacing:-.05em;color:var(--txt);line-height:1;margin-top:20px}
-/* The only other place the accent appears. A span is an inline box, so this
+  line-height:1.25;letter-spacing:.30em;text-transform:uppercase;color:var(--txt-3)}
+.word{display:block;font-family:"Sora",sans-serif;font-weight:600;font-size:100px;
+  letter-spacing:-.05em;color:var(--txt);line-height:1;margin-top:18px}
+/* One of only two places the accent appears. A span is an inline box, so this
    needs display:block or it silently draws nothing. */
-.rule{display:block;width:104px;height:3px;background:var(--violet);margin-top:26px;border-radius:2px}
-.tag{display:block;font-family:"Jakarta",sans-serif;font-size:29px;color:var(--txt-2);
-  margin-top:22px;letter-spacing:-.008em}
+.rule{display:block;width:104px;height:3px;background:var(--violet);margin-top:24px;border-radius:2px}
+/* Two lines, not one. It gives the block a shape instead of a long thin line,
+   and it keeps the right edge at x=512 so the chart can start at 566 with no
+   vertical negotiation at all. */
+.tag{display:block;font-family:"Jakarta",sans-serif;font-size:27px;line-height:1.42;
+  color:var(--txt-2);margin-top:20px;letter-spacing:-.008em;max-width:400px}
 
 .chart{position:absolute;left:0;top:0;width:1500px;height:500px}
-.legend{position:absolute;right:112px;top:236px;display:flex;gap:26px;align-items:center;
+/* Right edge lands on the chart's right edge. Sits at y=206, above the tallest
+   bar at y=254. */
+.legend{position:absolute;right:112px;top:206px;display:flex;gap:24px;align-items:center;
   font-family:"JBMono",monospace;font-size:15px;letter-spacing:.12em;text-transform:uppercase;
   color:var(--txt-3)}
 .legend span{display:flex;align-items:center;gap:9px}
@@ -31,35 +39,67 @@ body{background:#222;font-family:"Jakarta",sans-serif}
 .guide{position:absolute;outline:2px dashed rgba(248,113,137,.9);pointer-events:none}
 </style>
 
-<div class="plate" id="b3"></div>
-<div class="plate" id="b3g"></div>
+<div class="plate" id="b4"></div>
+<div class="plate" id="b4g"></div>
 
 <script>
-// Thirty days of gross against what stayed — the product's own chart, reduced.
+// Gross against what stayed — the product's own chart, reduced.
+//
+// One bar a day, not two. Side-by-side pairs went through two drafts and never
+// worked: at thirty days the bars fell to 8px and the whole thing read as a
+// barcode, and at sixteen the gap inside a pair was still too close to the gap
+// between pairs, so the eye grouped the wrong two bars and the chart said the
+// opposite of what it meant.
+//
+// Stacked in one column solves it and says more. The solid violet is what
+// stayed. The pale block above it is the difference — which is the tare, the
+// deduction the company is named after, drawn rather than captioned. There is
+// no pairing left to misread and the bars get three times the width.
+//
 // Fixed rather than random so the banner is reproducible, and deliberately
-// unlabelled: it is the shape of the method, not a claim about a number.
+// unlabelled and unaxised: it is the shape of the method, not a claim about a
+// number. Nothing here is a figure anyone could quote.
 const DAYS = [
-  [.62,.41],[.71,.48],[.55,.30],[.83,.57],[.66,.28],[.74,-.09],[.58,.36],[.91,.62],
-  [.69,.44],[.77,.51],[.60,.33],[.86,.59],[.72,.46],[.64,-.07],[.80,.55],[.68,.42],
-  [.75,.49],[.57,.31],[.88,.61],[.70,-.11],[.63,.39],[.79,.54],[.66,.43],[.94,.66],
+  [.62,.41],[.83,.57],[.66,.28],[.74,-.28],[.91,.62],[.69,.44],[.60,.33],[.86,.59],
+  [.72,.46],[.64,-.22],[.80,.55],[.68,.42],[.57,.31],[.88,.61],[.70,-.31],[.94,.66],
+  [.75,.49],[.63,.39],[.79,.54],[.90,.64],
 ];
-const X0 = 430, X1 = 1388, BASE = 430, MAXH = 126, MAXNEG = 38;
+
+// Geometry. Everything below is chosen against two hard edges and neither is
+// negotiable:
+//
+//   BASE - MAXH  = 254  · the tallest bar, which must clear the lockup
+//   BASE + MAXNEG = 424 · the deepest outflow bar, which must stay inside the
+//                         safe band. X crops top and bottom on narrow
+//                         viewports and the band is y 60..440 — the previous
+//                         draft put this at 468 and lost the rose bars on a
+//                         phone, which is the one colour on the plate that
+//                         carries an argument.
+const X0 = 566, X1 = 1388, BASE = 382, MAXH = 128, MAXNEG = 42;
 const PITCH = (X1 - X0) / DAYS.length;
-const BAR = (PITCH - 11) / 2;
+const GAP = 12, BAR = PITCH - GAP;
 
 function svg() {
-  const grid = [310, 350, 390].map(y =>
+  const grid = [286, 318, 350].map(y =>
     `<line x1="${X0}" y1="${y}" x2="${X1}" y2="${y}" stroke="rgba(241,237,255,.045)" stroke-width="1"/>`).join("");
+
   const bars = DAYS.map(([g, h], i) => {
-    const x = X0 + i * PITCH;
-    const gh = g * MAXH, hh = Math.abs(h) * (h < 0 ? MAXNEG / .12 * .12 : MAXH);
-    const gross = `<rect x="${x.toFixed(1)}" y="${(BASE - gh).toFixed(1)}" width="${BAR.toFixed(1)}" height="${gh.toFixed(1)}" rx="2" fill="var(--violet-tint)"/>`;
+    const x = (X0 + i * PITCH).toFixed(1);
+    const w = BAR.toFixed(1);
+    const gh = g * MAXH;
+    // The whole arrival.
+    const gross = `<rect x="${x}" y="${(BASE - gh).toFixed(1)}" width="${w}" height="${gh.toFixed(1)}" rx="3" fill="var(--violet-tint)"/>`;
     const held = h >= 0
-      ? `<rect x="${(x + BAR + 3).toFixed(1)}" y="${(BASE - hh).toFixed(1)}" width="${BAR.toFixed(1)}" height="${hh.toFixed(1)}" rx="2" fill="var(--violet)"/>`
-      // Below the line: more value left than arrived. Rose means exactly that.
-      : `<rect x="${(x + BAR + 3).toFixed(1)}" y="${BASE}" width="${BAR.toFixed(1)}" height="${Math.min(Math.abs(h) * MAXH * 3.2, MAXNEG).toFixed(1)}" rx="2" fill="var(--rose)"/>`;
+      // Drawn over the base of the same column, so what is left showing above
+      // it is the deduction.
+      ? `<rect x="${x}" y="${(BASE - h * MAXH).toFixed(1)}" width="${w}" height="${(h * MAXH).toFixed(1)}" rx="3" fill="var(--violet)"/>`
+      // Below the line: more value left than arrived, so there is no solid
+      // segment at all. Rose means that here and it means nothing else
+      // anywhere.
+      : `<rect x="${x}" y="${BASE}" width="${w}" height="${Math.min(-h * MAXH, MAXNEG).toFixed(1)}" rx="3" fill="var(--rose)"/>`;
     return gross + held;
   }).join("");
+
   return `<svg class="chart" viewBox="0 0 1500 500" fill="none">${grid}${bars}
     <line x1="${X0}" y1="${BASE}" x2="${X1}" y2="${BASE}" stroke="rgba(241,237,255,.16)" stroke-width="1.5"/></svg>`;
 }
@@ -74,10 +114,12 @@ const BODY = svg() + `
   <div class="legend">
     <span><i style="background:var(--violet-tint)"></i>gross inbound</span>
     <span><i style="background:var(--violet)"></i>still here</span>
+    <span><i style="background:var(--rose)"></i>net outflow</span>
   </div>`;
 
-document.getElementById("b3").innerHTML = BODY;
-document.getElementById("b3g").innerHTML = BODY +
+document.getElementById("b4").innerHTML = BODY;
+// Guides: X's avatar circle, and the band that survives a narrow-viewport crop.
+document.getElementById("b4g").innerHTML = BODY +
   `<div class="guide" style="left:51px;top:333px;width:334px;height:334px;border-radius:50%"></div>
    <div class="guide" style="left:0;top:60px;width:1500px;height:380px"></div>`;
 </script>
