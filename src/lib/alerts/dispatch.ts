@@ -48,6 +48,15 @@ export interface DispatchOptions {
   dataSource: DataSource;
   /** Format and decide, deliver nothing. */
   dryRun?: boolean;
+  /**
+   * Restrict delivery to these channels.
+   *
+   * Exists because the two channels are not equally recoverable. A Telegram
+   * mistake can be sent to a private channel first; X has no private target and
+   * `@Taredata` is public, so a test post is public. Being able to say
+   * "telegram only" is what makes testing the live path safe at all.
+   */
+  only?: Channel[];
   now?: () => number;
 }
 
@@ -56,13 +65,14 @@ export async function dispatchAlert(
   options: DispatchOptions,
 ): Promise<DispatchResult> {
   const now = (options.now ?? Date.now)();
-  const { dataSource, dryRun } = options;
+  const { dataSource, dryRun, only } = options;
+  const channels = (["telegram", "x"] as Channel[]).filter((c) => !only || only.includes(c));
   const result: DispatchResult = { kind: event.kind, entryId: event.entry.id, delivered: [] };
 
   // The guard. Simulated figures are not pushed to anyone's phone or timeline.
   // A page can carry a label a reader sees; a forwarded message cannot.
   if (dataSource === "sim" && !ALLOW_SIMULATED) {
-    result.delivered = (["telegram", "x"] as Channel[]).map((channel) => ({
+    result.delivered = channels.map((channel) => ({
       channel,
       ok: false,
       reason: "refused: figures are simulated (set ALERTS_ALLOW_SIMULATED=true to test)",
@@ -75,7 +85,7 @@ export async function dispatchAlert(
   // claim, it is not ours to publish — §1 is only worth anything if it holds on
   // the small statements too.
   if (event.kind === "first_seen" && !event.entry.recipient.firstSeen) {
-    result.delivered = (["telegram", "x"] as Channel[]).map((channel) => ({
+    result.delivered = channels.map((channel) => ({
       channel,
       ok: false,
       reason: "refused: first_seen event on a recipient the entry marks as returning",
@@ -95,7 +105,7 @@ export async function dispatchAlert(
   const skip = (channel: Channel, reason: string) =>
     jobs.push(Promise.resolve({ channel, ok: false, reason }));
 
-  for (const channel of ["telegram", "x"] as Channel[]) {
+  for (const channel of channels) {
     const configured = channel === "telegram" ? telegramConfigured() : xConfigured();
     if (!configured) {
       skip(channel, "not configured");
