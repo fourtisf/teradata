@@ -1,0 +1,37 @@
+<!--
+  Memory caps for a shared 8GB box.  →  /etc/clickhouse-server/config.d/
+
+  ClickHouse defaults assume it owns the machine. On this VPS it shares 7.8GB
+  with Next.js, Redis, Postgres and the ingest workers, and the default
+  max_server_memory_usage_to_ram_ratio of 0.9 means a heavy query can reach
+  ~7GB — at which point the OOM killer picks a victim, and it will not be
+  ClickHouse. Next.js dies instead and the site goes down for a reason that
+  looks nothing like its cause.
+
+  So the ceiling is explicit. Raise it only after moving something off the box.
+-->
+<clickhouse>
+    <!-- 3 GiB. Server-wide ceiling across all queries and background merges. -->
+    <max_server_memory_usage>3221225472</max_server_memory_usage>
+
+    <!-- 256 MiB of mark cache is plenty for a table this narrow. -->
+    <mark_cache_size>268435456</mark_cache_size>
+
+    <!-- Off. Reads here are analytical scans over recent partitions, so this
+         cache would hold data nothing asks for twice. -->
+    <uncompressed_cache_size>0</uncompressed_cache_size>
+
+    <!-- 2 vCPU. Background merges competing with ingest and SSR for the same
+         two cores is the actual bottleneck on this box, not memory. -->
+    <background_pool_size>4</background_pool_size>
+
+    <!-- Loopback only. Nothing outside this machine talks to ClickHouse, and
+         an open 8123 with a default user is how these get found. -->
+    <listen_host>127.0.0.1</listen_host>
+
+    <logger>
+        <level>warning</level>
+        <size>100M</size>
+        <count>3</count>
+    </logger>
+</clickhouse>
