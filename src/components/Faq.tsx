@@ -10,6 +10,30 @@ import { Reveal } from "@/components/Reveal";
  */
 const QUESTIONS: Array<{ q: string; a: ReactNode }> = [
   {
+    q: "What does re-exported mean?",
+    a: (
+      <>
+        Money that arrived on Solana and then <strong>left the chain again</strong> — bridged out to
+        another chain, or sent back into an exchange. It came in, it did not stay, so we subtract it.
+        Three things that look similar are <em>not</em> re-exports, because the value is still here:
+        swapping into another token, putting it into lending, an LP or staking, and sending it to
+        another Solana wallet. If only part of the arrival leaves, only that part is subtracted.
+      </>
+    ),
+  },
+  {
+    q: "What does idle capital mean?",
+    a: (
+      <>
+        Money that arrived and has done <strong>nothing at all</strong> since — not swapped, not
+        deposited anywhere, not sent on. It is sitting in the wallet exactly where it landed. It is
+        the only figure on this site that points forward rather than back: every other number is
+        money that has already been committed, and this one is buying power that has not been spent
+        yet.
+      </>
+    ),
+  },
+  {
     q: "Why is your number smaller than DefiLlama's?",
     a: (
       <>

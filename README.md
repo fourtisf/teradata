@@ -145,13 +145,18 @@ error produces the identical message rather than a second different one, and a
 reviewer can reproduce exactly what went out.
 
 The register is a desk note, not a marketing post — declarative, no exclamation,
-no hype adjective, and the product's own vocabulary throughout, so a reader
-learns *arrived, settled, held, re-exported, dwell, first use* once and then
-sees the same words on the site. §1 binds the copy the same way it binds the
-schema: flow and the wallet's verifiable properties, never a firm. The
-dispatcher also refuses a `first_seen` event whose entry marks the recipient as
-returning, because every phrasing of that alert opens by asserting the wallet is
-new.
+no hype adjective. And **the first line never needs a glossary.** The site can
+afford a term of art next to a definition; an alert arrives alone on someone's
+phone with no page around it, so the body says *came in*, *went back out*, *has
+not moved* rather than *re-exported*, *idle capital*, *dwell*. The schema words
+still travel — the footer carries the confidence class and its plain-English
+meaning together, after a sentence that has already said what happened, which is
+how a reader picks the vocabulary up rather than bouncing off it.
+
+§1 binds the copy the same way it binds the schema: flow and the wallet's
+verifiable properties, never a firm. The dispatcher also refuses a `first_seen`
+event whose entry marks the recipient as returning, because every phrasing of
+that alert opens by asserting the wallet is new.
 
 Preview the copy without credentials and without sending:
 

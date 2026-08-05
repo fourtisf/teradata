@@ -22,11 +22,28 @@ const MARK: Record<AlertEvent["kind"], string> = {
   first_seen: "🟣",
 };
 
+/**
+ * Plain, because an alert arrives alone with no page around it to explain
+ * itself. The schema words — `reexported`, `held` — are in the footer, under a
+ * sentence that has already said what happened.
+ */
 const HEADLINE: Record<AlertEvent["kind"], string> = {
-  arrival: "Arrival",
-  reexport: "Re-exported",
-  idle: "Idle capital",
-  first_seen: "First-seen wallet",
+  arrival: "Money arrived",
+  reexport: "Money left again",
+  idle: "Still not moved",
+  first_seen: "New wallet",
+};
+
+/**
+ * How we know where it came from, in words. Bridges carry a message id we can
+ * match; exchange withdrawals are recognised from a labelled hot wallet, which
+ * is a weaker claim. §3.2 says we state the difference rather than smooth it,
+ * and an alert is one of the surfaces that has to.
+ */
+const EVIDENCE: Record<string, string> = {
+  matched: "Origin confirmed against the bridge's own record",
+  attributed: "Origin identified from a known exchange wallet, not a bridge record",
+  unattributed: "Origin not confirmed — counted in the total, left out of the breakdown",
 };
 
 /**
@@ -71,7 +88,9 @@ function buildContext(event: AlertEvent, now: number): CopyContext {
     originArticle: article(e.origin),
     route: e.route,
     isBridge,
-    wallet: e.recipient.firstSeen ? "a wallet with no prior Solana history" : "a returning wallet",
+    wallet: e.recipient.firstSeen
+      ? "a wallet with no Solana history before today"
+      : "a wallet we have seen on Solana before",
     firstSeen: e.recipient.firstSeen,
     settle: seconds(e.lagMs),
     fastSettle: e.lagMs < 5_000,
@@ -113,13 +132,16 @@ export function telegramMessage(
   const variant = pickVariant(event.kind, event.entry.id, context);
   const e = event.entry;
 
+  const history = context.firstSeen ? "no Solana history before today" : "seen on Solana before";
+  const evidence = EVIDENCE[e.confidence] ?? EVIDENCE.unattributed!;
+
   return [
     `${MARK[event.kind]} <b>${escapeHtml(prefix(dataSource) + HEADLINE[event.kind])}</b>`,
     "",
     ...variant.telegram(context),
     "",
-    `Recipient: ${context.wallet} · <code>${escapeHtml(shortAddress(e.recipient.address))}</code>`,
-    `Settled in ${context.settle} · confidence <code>${e.confidence}</code>`,
+    `Wallet <code>${escapeHtml(shortAddress(e.recipient.address))}</code> · ${history} · landed in ${context.settle}`,
+    `${evidence} (<code>${e.confidence}</code>)`,
     "",
     context.link,
   ].join("\n");
