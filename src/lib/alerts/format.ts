@@ -31,22 +31,24 @@ const MARK: Record<AlertEvent["kind"], string> = {
  * footer, under a sentence that has already shown what they describe.
  */
 const HEADLINE: Record<AlertEvent["kind"], string> = {
-  arrival: "Money in",
-  reexport: "Out again",
-  idle: "Still sitting",
+  arrival: "Money arrived",
+  reexport: "Money left again",
+  idle: "Still not moved",
   first_seen: "New wallet",
 };
 
 /**
- * How we know where it came from. Bridges carry a message id we can match;
- * exchange withdrawals are recognised from a labelled hot wallet, which is a
- * weaker claim. §3.2 says we state the difference rather than smooth it, and an
- * alert is one of the surfaces that has to.
+ * How we know where it came from, said the way it would be said out loud.
+ * Bridges carry a message id we can match; exchange withdrawals are recognised
+ * from a labelled hot wallet, which is a weaker claim. §3.2 says we state the
+ * difference rather than smooth it, and an alert is one of the surfaces that
+ * has to — so the plain sentence leads and the schema word follows it, which is
+ * how a reader learns the word instead of bouncing off it.
  */
 const EVIDENCE: Record<string, string> = {
-  matched: "Origin confirmed off the bridge's own record",
-  attributed: "Caught off a known exchange wallet, no bridge record",
-  unattributed: "Origin unconfirmed — in the total, out of the breakdown",
+  matched: "The bridge's own record confirms where this came from",
+  attributed: "We recognised the exchange's wallet — less certain than a bridge",
+  unattributed: "We could not confirm where this came from",
 };
 
 /**
@@ -99,8 +101,8 @@ function buildContext(event: AlertEvent, now: number): CopyContext {
     route: e.route,
     isBridge,
     wallet: e.recipient.firstSeen
-      ? "a wallet with no Solana history before today"
-      : "a wallet we have seen on Solana before",
+      ? "a wallet that had never used Solana before today"
+      : "a wallet that has used Solana before",
     firstSeen: e.recipient.firstSeen,
     settle: seconds(e.lagMs),
     fastSettle: e.lagMs < 5_000,
@@ -142,7 +144,9 @@ export function telegramMessage(
   const variant = pickVariant(event.kind, event.entry.id, context);
   const e = event.entry;
 
-  const history = context.firstSeen ? "first time on Solana" : "seen before";
+  const history = context.firstSeen
+    ? "never used Solana before today"
+    : "has used Solana before";
   const evidence = EVIDENCE[e.confidence] ?? EVIDENCE.unattributed!;
   const title = variant.title?.(context) ?? HEADLINE[event.kind];
 
@@ -151,7 +155,7 @@ export function telegramMessage(
     "",
     ...variant.telegram(context),
     "",
-    `<code>${escapeHtml(shortAddress(e.recipient.address))}</code> · ${history} · ${context.settle} to land`,
+    `Wallet <code>${escapeHtml(shortAddress(e.recipient.address))}</code> · ${history} · arrived in ${context.settle}`,
     `${evidence} (<code>${e.confidence}</code>)`,
     "",
     context.link,

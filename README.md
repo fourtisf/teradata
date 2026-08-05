@@ -144,24 +144,31 @@ Deterministic rather than random, for two reasons: a retry after a transport
 error produces the identical message rather than a second different one, and a
 reviewer can reproduce exactly what went out.
 
-The voice is native to the timeline it posts on. Number first, short sentences,
-fragments where a fragment is clearer, none of the hedging a press release would
-add. *"$39.9M in from Ethereum. Out again four hours later."* That is the
-register, and note that it is **shorter** than the polite version rather than
-louder — no exclamation, no all-caps, no rocket, no adjective doing work a
-number should do. The figures are the only interesting thing in the message and
-anything decorating them competes with them.
+The voice is short, and understood on the first read by someone whose English is
+their second or third language — which is most of this audience. Number first,
+one idea per sentence, common words. *"$39.9M came in from Ethereum. Four hours
+later it left Solana again. It came in and it went out, so we count it as zero
+new money."*
 
-**The first line never needs a glossary.** The site can afford a term of art
-next to a definition; an alert arrives alone on someone's phone with no page
-around it, so the body says *in*, *out again*, *still sitting*, *dry powder* —
-not *re-exported*, *idle capital*, *dwell*. Most variants also write their own
-header, because one repeated category label across every post is what makes a
-feed look automated. The schema words still travel: the footer pairs the
-confidence class with what it actually means, under a sentence that has already
-shown what it describes.
+Three things get in the way of that, and all three are banned:
 
-§1 does not relax because the register got shorter. *Whale*, *smart money* and
+- **Terms of art** — *re-exported*, *idle capital*, *dwell*, *inflow*. They
+  belong on the site next to a definition, and in the API. An alert arrives
+  alone on a phone with no page around it.
+- **Idioms** — *caught off the hot wallet*, *dry powder*, *round trip*. Fluent,
+  and opaque to anyone who did not grow up with them. "We recognised the
+  exchange's wallet" and "money waiting to be spent" say the same thing and need
+  nothing explained.
+- **Volume** — no exclamation, no all-caps, no rocket, no adjective doing work
+  the number is already doing.
+
+The schema words still travel: the footer states in plain English how the origin
+was established, then names the confidence class in brackets, so a reader learns
+the word rather than bouncing off it. Most variants also write their own header,
+because one repeated category label across every post is most of what makes a
+feed look automated.
+
+§1 does not relax because the register got simpler. *Whale*, *smart money* and
 *aped in* are guesses about who is acting and why — exactly the guesses that
 turn a measurement into a defamation risk — so the copy describes the flow and
 what is verifiable about the wallet, and nothing else. The dispatcher also
