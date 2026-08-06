@@ -12,8 +12,30 @@ export function telegramConfigured(): boolean {
   return Boolean(TELEGRAM.token && TELEGRAM.chatId);
 }
 
-export async function sendTelegram(text: string): Promise<DeliveryResult> {
-  if (!telegramConfigured()) {
+/**
+ * The bot token is a path segment in every Bot API URL — that is how the API is
+ * designed, and there is no header form to use instead. So it can reach a
+ * thrown error's message, and from there into the JSON that
+ * `/api/alerts/dispatch` returns and the lines the poster logs.
+ *
+ * Undici rarely puts the URL in a message today. "Rarely" is not a property to
+ * leave a credential's confidentiality resting on.
+ */
+function redact(message: string): string {
+  return TELEGRAM.token ? message.split(TELEGRAM.token).join("[token]") : message;
+}
+
+/**
+ * `chatId` overrides the configured channel.
+ *
+ * Broadcasts go to `TELEGRAM_CHAT_ID` and always should. The command handler in
+ * `social/commands.ts` is the exception: it answers whoever asked, in their own
+ * chat, and sending that to the channel instead would publish one person's
+ * question to every subscriber.
+ */
+export async function sendTelegram(text: string, chatId?: string | number): Promise<DeliveryResult> {
+  const target = chatId ?? TELEGRAM.chatId;
+  if (!TELEGRAM.token || !target) {
     return { channel: "telegram", ok: false, reason: "not configured" };
   }
 
@@ -22,7 +44,7 @@ export async function sendTelegram(text: string): Promise<DeliveryResult> {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        chat_id: TELEGRAM.chatId,
+        chat_id: target,
         text,
         parse_mode: "HTML",
         // The permalink is for the reader to follow, not for Telegram to
@@ -49,6 +71,69 @@ export async function sendTelegram(text: string): Promise<DeliveryResult> {
     }
     return { channel: "telegram", ok: true, id: String(body.result?.message_id ?? "") };
   } catch (error) {
-    return { channel: "telegram", ok: false, reason: (error as Error).message };
+    return { channel: "telegram", ok: false, reason: redact((error as Error).message) };
+  }
+}
+
+/** Telegram's own limit on a photo caption. Longer and the API rejects the call. */
+export const CAPTION_LIMIT = 1024;
+
+/**
+ * The same message with the daily card above it.
+ *
+ * Telegram is the one channel where the image is worth uploading: the text
+ * message sets `disable_web_page_preview`, so a link does not unfurl into
+ * anything, and the card is what makes the post readable in a scroll. X gets
+ * the card for free by unfurling the permalink's Open Graph tags, which is why
+ * `sendX` has no media path and no multipart upload to keep working.
+ *
+ * The caller decides what to do with a failure, and `runner.ts` deliberately
+ * does not retry it as a plain message in the same pass: a timeout after
+ * Telegram accepted the photo looks exactly like a rejection, so the fallback
+ * would turn a lost response into a guaranteed second copy.
+ */
+export async function sendTelegramPhoto(
+  caption: string,
+  image: ArrayBuffer,
+): Promise<DeliveryResult> {
+  if (!telegramConfigured()) {
+    return { channel: "telegram", ok: false, reason: "not configured" };
+  }
+  if (caption.length > CAPTION_LIMIT) {
+    return { channel: "telegram", ok: false, reason: `caption is ${caption.length} chars` };
+  }
+
+  try {
+    const form = new FormData();
+    form.append("chat_id", TELEGRAM.chatId!);
+    form.append("caption", caption);
+    form.append("parse_mode", "HTML");
+    form.append("photo", new Blob([image], { type: "image/png" }), "tare-card.png");
+
+    const response = await fetch(`https://api.telegram.org/bot${TELEGRAM.token}/sendPhoto`, {
+      method: "POST",
+      body: form,
+      // Longer than sendMessage's eight seconds because this one carries an
+      // upload. Scheduled posts are not on the under-10s path — that promise is
+      // about a movement reaching a phone, not about a recap of a closed day.
+      signal: AbortSignal.timeout(20_000),
+    });
+
+    const body = (await response.json().catch(() => ({}))) as {
+      ok?: boolean;
+      description?: string;
+      result?: { message_id?: number };
+    };
+
+    if (!response.ok || !body.ok) {
+      return {
+        channel: "telegram",
+        ok: false,
+        reason: body.description ?? `http ${response.status}`,
+      };
+    }
+    return { channel: "telegram", ok: true, id: String(body.result?.message_id ?? "") };
+  } catch (error) {
+    return { channel: "telegram", ok: false, reason: redact((error as Error).message) };
   }
 }

@@ -15,10 +15,10 @@ strip reads `Simulated`, a preview banner says so on every page, and
 | Phase | State |
 |---|---|
 | P0 — skeleton, simulated data | done |
-| P1 — Solana ingest | not started, see *What P1 needs* below |
+| P1 — Solana ingest | store and schema done and tested; the Helius subscription needs a key, see *What P1 needs* |
 | P2–P3 — correlation, re-export | not started |
 | P4 — product surface | done ahead of schedule (range, chart, traces, coverage, status) |
-| P5 — retention | daily card done as the OG generator; alert delivery to Telegram and X done, refused until data is real |
+| P5 — retention | daily card done as the OG generator; alert delivery and the scheduled poster done, both refused until data is real |
 | P6 — public pages | pages, sitemap, JSON-LD and OG done; REST/WS API not started |
 
 ### Routes
@@ -31,6 +31,7 @@ strip reads `Simulated`, a preview banner says so on every page, and
 /status                 indexer state, unattributed share, changelog
 /api/waitlist           POST { email }, forwards to WAITLIST_WEBHOOK_URL
 /api/alerts/dispatch    POST an alert event, behind ALERTS_DISPATCH_SECRET
+/api/telegram/webhook   Telegram delivers bot commands here, behind a secret token
 /opengraph-image        the daily card, and one per public page
 /sitemap.xml /robots.txt
 ```
@@ -47,6 +48,19 @@ npm run dev            # http://localhost:3000
 npm run build          # production build
 npm start              # serve the production build
 npm run typecheck      # tsc --noEmit
+```
+
+```bash
+npm run social         # the scheduled poster (see below); PM2 runs this
+npm run social:check   # the scheduler's tests — clock, ledger, budget, guard
+npm run social:preview # every scheduled post, rendered, nothing sent
+npm run alerts:preview # every alert variant, rendered, nothing sent
+npm run telegram:webhook -- --info   # where Telegram is delivering bot commands
+```
+
+```bash
+createdb tare_test
+POSTGRES_URL=postgres:///tare_test npm run db:check   # the store, against real SQL
 ```
 
 Deploys to Vercel with no configuration. `DATA_SOURCE` defaults to `sim`, so a
@@ -189,6 +203,267 @@ is added.
 Dedupe and cooldown are in-process, which is right for exactly one PM2 instance
 and wrong for two — §2 already specifies Redis for the pub/sub layer and this
 moves there with it. `ecosystem.config.cjs` runs one instance for that reason.
+
+## The scheduled poster
+
+Alerts are reactive: something moves, the P1 ingest worker hands it over, a
+message goes out. That path publishes nothing on a quiet day and nothing at all
+until P1 exists, which would leave both accounts empty. `src/lib/social/` is the
+other half — it fires on a clock, from figures the site already holds.
+
+```bash
+npm run social                 # the worker; the tare-social PM2 process
+npm run social -- --once       # one tick and exit, for a system cron instead
+npm run social -- --dry-run    # compose and decide, send nothing
+npm run social -- --once --dry-run --at 2026-08-07T00:06:00Z
+```
+
+Two triggers. A **daily** recap at 00:05 UTC, and a **weekly** one on Mondays at
+00:20 UTC covering the seven settled days behind it. Both go to Telegram and X.
+
+### The daily post is not about yesterday
+
+§P5 asks for a daily card at 00:00 UTC and the obvious reading is a recap of the
+day that just ended. That reading publishes a number we would have to correct.
+
+§3.3 watches each arrival for 24 hours. An arrival at 23:40 on the 5th has an
+open window until 23:40 on the 6th, so at 00:05 on the 6th the held figure for
+the 5th is provisional — and it can only move one way, down, as round trips
+close. The site is allowed to show that: §3.4 makes rows mutable and the feed
+restamps them in front of the reader. A post cannot. It is screenshotted, quoted
+and forwarded at the value it had when it was sent.
+
+So the daily post covers the most recent day whose windows have **all** closed.
+At 00:05 on the 7th that is the 5th. The cost is a date one day further back
+than a reader might expect, and the site carries today's figure live for anyone
+who wants it sooner. `REEXPORT_WINDOW_HOURS` drives it, so if §11 settles on 12h
+or 48h the settled date follows without a code change.
+
+### What stops it publishing
+
+The same simulated-data guard as the alert path — one switch, both halves — and
+that switch **does not open X**. `ALERTS_ALLOW_SIMULATED=true` exists so the
+delivery path can be tested into a *private* Telegram channel, where a mistake
+is recoverable. There is no private tweet: `@TareData_` is public, so a test
+post is public, and an invented dollar amount published under the brand is what
+§1 says cannot be undone by fixing the data afterwards. `--public` overrides it
+and exists so the flag is typed by someone who has read that sentence, which is
+the same bargain `alert-test.mts` already makes.
+
+Then four more, in `runner.ts`:
+
+- **The indexer is down.** A total drawn across a gap is wrong in the direction
+  that flatters us.
+- **No figures for the period.** A day the provider has no page for, or a week
+  missing one of its seven days. Nothing is posted rather than a `$0` that reads
+  as a complete figure.
+- **Already posted.** The ledger is on disk, so a restart at 00:06 does not
+  repost what went out at 00:05, and a redeploy mid-month does not reset the X
+  count.
+- **Out of budget, or out of attempts.** Three tries per occurrence per channel.
+  Delivery is at-least-once — a lost response is indistinguishable from a
+  refusal — and three is enough to cross a restart while bounding the duplicate
+  risk.
+
+Missed firings are not caught up. A box that was down for a day comes back and
+posts today's recap, not yesterday's under a date nobody is thinking about any
+more.
+
+### The X budget is now enforced
+
+500 posts a month, hard, and previously documented rather than counted. That was
+survivable while nothing published without a person starting it. It is not
+survivable for an unattended process: an allowance spent by the 20th means the
+feed is silent for eleven days, and the first sign of it is a 429 during the
+exact event worth posting about.
+
+`social/budget.ts` counts against the ledger, across both halves. Scheduled
+posts may spend down to a safety margin; **alerts stop a reserve short of it**,
+because a movement not announced is one gap and a month of missing recaps is the
+account going quiet.
+
+### The card, and why only Telegram gets it
+
+`src/lib/og.tsx` already generates the daily card and already serves it at every
+page's `opengraph-image` route. The poster fetches that image over loopback
+rather than rendering a second copy — a second layout would drift from the first
+the week either was edited alone.
+
+Telegram gets it as a photo, because its messages disable link previews and
+nothing would unfurl otherwise. X does not: it unfurls the permalink's Open
+Graph tags into the same card for free, so there is no media upload to keep
+working and no dependence on an API tier that may not include one. If the fetch
+fails the post still goes out as text — the figures are in the words.
+
+### The ledger
+
+An append-only NDJSON file, one per UTC month, under `SOCIAL_LEDGER_DIR`
+(`/var/lib/tare/social` on the box, outside the checkout so `git pull` cannot
+touch it). A single `appendFile` of one line is atomic on POSIX, so the app and
+the worker can both write it without coordinating — which read-modify-write on a
+JSON file could not.
+
+Not Postgres, on the same arithmetic §11 used to drop ClickHouse: this is forty
+rows a day read by two processes that share a filesystem by construction, and a
+database dependency would stop the poster starting for bookkeeping the database
+is not otherwise part of. `PostLedger` is the seam for the day the app and the
+worker stop sharing a disk — the same day the in-process alert dedupe has to
+move to Redis.
+
+Reads and writes fail soft. Losing the bookkeeping degrades the budget count;
+throwing would lose a post.
+
+## The bot answers as well as posts
+
+`/today`, `/week`, `/status` and `/help`, in whatever chat asks. Everything
+above this line pushes — a recap fires on a clock and goes to everyone; this is
+the other direction.
+
+A webhook rather than a `getUpdates` loop: the app is already public behind
+nginx with TLS, so it is a route instead of a second polling process with a
+durable offset to keep, and Telegram's own `secret_token` authenticates it so
+there is no scheme to invent. Unset `TELEGRAM_WEBHOOK_SECRET` closes the route
+the way an unset `ALERTS_DISPATCH_SECRET` closes the dispatch one.
+
+```bash
+openssl rand -hex 32                 # put it in .env.local, then
+npm run telegram:webhook -- --info   # check what is registered first
+npm run telegram:webhook -- --set
+npm run telegram:webhook -- --delete
+```
+
+Telegram holds exactly one webhook per bot token, so `--set` from a laptop
+points the production bot at the laptop. `--info` first, always.
+
+**The same guard applies to answers.** A reply is one-to-one and pull-based,
+which sounds safer than a broadcast and is not: it is forwarded and
+screenshotted the same way. So while `DATA_SOURCE=sim` the bot says nothing is
+measured yet and links to the method, rather than quoting a generated figure
+with a label a screenshot drops.
+
+Two other rules hold the surface small. Nothing a user types is echoed back —
+the parser keeps the first token and discards the rest, so there is no argument
+to reflect and no way to make the account post someone else's link. And the
+reply goes to the chat that asked, never to `TELEGRAM_CHAT_ID`, which would
+publish one person's question to every subscriber.
+
+### Checking it
+
+```bash
+npm run social:check     # the clock, the ledger, the budget, the guard
+ALERTS_ALLOW_SIMULATED=true npm run social:check   # …and that X stays shut
+npm run social:preview   # a fortnight of dailies and the weekly, as they would post
+npm run social:preview -- --all   # every variant forced, including the rose one
+```
+
+`social:check` is run both ways on purpose. `ALERTS_ALLOW_SIMULATED` is read at
+module load so the script cannot move it, and each setting has its own thing to
+prove: closed, every channel is refused; open, X is still held back for being
+public and `--public` is what lifts it.
+
+`social:check` drives ninety days of ten-minute ticks through the real schedule
+and asserts one occurrence per day, twelve hours of lateness and no more, and
+that a three-day outage yields one post rather than three. `social:preview`
+exits non-zero if any X post would break 280 once a t.co link is counted, or any
+Telegram post would break the caption limit that lets the card be attached.
+
+## The store
+
+`src/lib/db/` is the write side of P1 — what the Helius subscription lands on
+once there is a key for it. The transport is replaceable; the rules are not, so
+they live here rather than in the worker, and every one of them is enforced in
+SQL rather than trusted to a caller:
+
+- **A replay cannot double-count.** `arrivals` is upserted on
+  `(solana_tx, instruction_index)`. A restarted stream re-delivers whole slots,
+  and the transaction alone is the wrong key — one bridge settlement can carry
+  several transfers, and keying on the transaction would lose all but the first.
+- **A replay cannot weaken what is known.** An arrival already matched to its
+  origin deposit stays matched; a row already priced stays priced.
+- **An unpriced arrival is stored as null, never `$0`.** §11 closed this: a zero
+  understates the headline while looking like a complete figure.
+- **A closed window stays closed.** §3.4 makes a row mutable for 24 hours and
+  history afterwards, so a late re-export or first-use write is refused rather
+  than silently moving a published day.
+- **Partial exits are proportional.** `reexported_usd` accumulates and clamps at
+  what arrived; only a full exit makes the arrival a re-export.
+
+`indexer_state` is a separate signal from all of that, and the reason is worth
+stating: deriving "is the indexer up" from how recently something arrived calls
+a quiet Sunday an outage and calls a stalled stream healthy for as long as its
+backlog lasts. The worker stamps a heartbeat on every slot it processes,
+whether or not anything arrived in it, and liveness is the age of that stamp.
+
+```bash
+createdb tare_test
+POSTGRES_URL=postgres:///tare_test npm run db:check
+```
+
+The check applies `deploy/postgres/schema.sql` first, so the schema is verified
+by being used rather than by being read. It refuses a connection string that
+does not say `test`, because it truncates.
+
+`LiveProvider.getStatus()` is wired to those tables — §P1's "freshness and slot
+indicators wired to real values". **Every other method still throws**, so a
+build pointed at `live` fails on the first page it renders rather than serving a
+figure from a half-filled database.
+
+## Which credentials are set
+
+```bash
+npm run env:check            # every credential, and what each missing one blocks
+npm run env:check -- --strict   # exit non-zero if a live-critical one is missing
+```
+
+It reads `.env.local` the same way the poster does, so it reports the state the
+processes will actually see rather than the state of your shell. **No value is
+ever printed** — a length and "set" answers "did it get through", and anything
+more is a credential in a terminal that gets screenshotted.
+
+Nothing is required while `DATA_SOURCE=sim`, and the report says so rather than
+listing twenty red lines at someone who has not started P1 yet.
+
+## RPC failover
+
+`src/lib/rpc/` tries each Solana endpoint in turn until one answers.
+
+**It is not a fallback for the Geyser stream.** §2 fixes Helius gRPC because the
+product promises event-to-alert under ten seconds, and a JSON-RPC endpoint
+standing in for the stream would quietly turn ingest into the polling design §2
+refuses. If the stream is down the honest state is `degraded` on the status
+page, not a slower path nobody was told about. This is for the other half the
+env file already describes: gap repair after a restart, and pulling a
+settlement's full transaction.
+
+Three things in it matter more than the code:
+
+- **A public endpoint is not a slower Helius.** It is rate-limited, usually not
+  archival, and can return a shorter history for the same call. Failing over to
+  a node that returns *less* is worse than failing outright, because the result
+  looks complete and is not — the same failure §3.1 refuses when it keeps an
+  unmatched arrival rather than guessing an origin. So every endpoint is
+  tiered, every answer carries which one produced it, and a read that passes
+  `requireComplete` refuses a fallback rather than quietly accepting a short
+  answer. `getTransaction` sets it by default.
+- **A JSON-RPC error is usually an answer, not a failure.** "Invalid params"
+  means the next endpoint will say the same thing, so retrying is a slower way
+  to get the same result and it spends a rate limit doing it. Only the codes
+  meaning *this node cannot help* — behind, unhealthy, block cleaned up — move
+  on.
+- **A failing endpoint is stood down, not retried into the ground.** Without a
+  breaker, every call pays a full timeout against a dead primary before reaching
+  a working fallback, so a provider outage becomes latency everywhere instead of
+  a clean switch. Stood-down endpoints go to the back of the queue rather than
+  being dropped: if everything is failing, one that may have recovered beats
+  refusing.
+
+```bash
+npm run rpc:check   # failover, breaker, provenance — against local HTTP servers
+```
+
+No network and no credentials: local servers stand in for a dead primary, a
+rate-limited one and a healthy fallback. Failover is exactly the code that is
+never exercised until the day it matters.
 
 ## What is verified
 

@@ -78,6 +78,15 @@ CREATE TABLE IF NOT EXISTS arrivals (
     price_ts              timestamptz,
 
     solana_tx             text NOT NULL,
+
+    -- Which transfer within that transaction. A bridge settlement can carry
+    -- several in one transaction, and a restarted stream replays whole slots,
+    -- so the pair (solana_tx, instruction_index) is what makes an arrival
+    -- identifiable — and therefore what makes a replay idempotent instead of a
+    -- double-count. Defaults to 0 for a source that has only one per
+    -- transaction.
+    instruction_index     integer NOT NULL DEFAULT 0,
+
     solana_slot           bigint NOT NULL,
     solana_ts             timestamptz NOT NULL,
     lag_ms                integer NOT NULL DEFAULT 0,
@@ -121,10 +130,36 @@ CREATE INDEX IF NOT EXISTS arrivals_open_idx ON arrivals (solana_ts)
 -- Following a recipient, and answering "has this wallet been seen before".
 CREATE INDEX IF NOT EXISTS arrivals_recipient_idx ON arrivals (recipient);
 
+-- What makes ingest safe to replay. §3.1's stream restarts and re-delivers
+-- slots; without this the second delivery is a second arrival and the headline
+-- figure doubles for that transaction.
+CREATE UNIQUE INDEX IF NOT EXISTS arrivals_settlement_idx
+    ON arrivals (solana_tx, instruction_index);
+
 -- §3.1 matching: the pending buffer lives in Redis, but a late origin deposit
 -- has to find an already-settled row by the bridge's own identifier.
 CREATE UNIQUE INDEX IF NOT EXISTS arrivals_message_idx ON arrivals (bridge, message_id)
     WHERE message_id <> '';
+
+-- ---------------------------------------------------------------------------
+-- indexer_state — is the indexer alive, separately from whether money is moving.
+--
+-- §7 puts the indexer's state on a public page, and the obvious way to derive
+-- it is "how long since the last arrival". That reading calls a quiet Sunday an
+-- outage and a stalled stream healthy for as long as the backlog lasts. They
+-- are different questions, so this is a different signal: the worker stamps it
+-- on every slot it processes, whether or not anything arrived in that slot.
+--
+-- One row, enforced by the primary key rather than by everyone remembering.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS indexer_state (
+    id          boolean PRIMARY KEY DEFAULT true CHECK (id),
+    last_slot   bigint NOT NULL DEFAULT 0,
+    -- The chain's own clock for that slot, so drift between us and the network
+    -- is visible rather than hidden behind our own wall clock.
+    slot_ts     timestamptz,
+    updated_at  timestamptz NOT NULL DEFAULT now()
+);
 
 -- ---------------------------------------------------------------------------
 -- daily_flows — the rollup every public page in §8 reads.

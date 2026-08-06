@@ -7,17 +7,30 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "social": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/social-bot.mts",
+    "social:preview": "tsx --tsconfig tsconfig.json scripts/social-preview.mts",
+    "social:check": "tsx --tsconfig tsconfig.json scripts/social-check.mts",
+    "alerts:preview": "tsx --tsconfig tsconfig.json scripts/alert-preview.mts",
+    "alerts:test": "tsx --tsconfig tsconfig.json scripts/alert-test.mts",
+    "x:verify": "tsx --tsconfig tsconfig.json scripts/x-verify.mts",
+    "telegram:webhook": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/telegram-webhook.mts",
+    "db:check": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/db-check.mts",
+    "rpc:check": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/rpc-check.mts",
+    "env:check": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/env-check.mts"
   },
   "dependencies": {
     "next": "16.3.0",
+    "pg": "^8.22.0",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@types/node": "^22.18.0",
+    "@types/pg": "^8.20.4",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
+    "tsx": "^4.20.0",
     "typescript": "^5.9.0"
   }
 }

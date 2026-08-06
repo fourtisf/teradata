@@ -6,9 +6,16 @@
  * headline figure being defensible (§1), so a build that cannot reach the real
  * data must not serve a number at all.
  *
- * When this is filled in it reads ClickHouse for aggregates and history, Redis
- * for the pending-arrival buffer, and subscribes to the websocket layer for the
- * live feed. See §2 and §4.
+ * `getStatus()` is the exception and the first thing P1 wires up: §P1 asks for
+ * the freshness and slot indicators to read real values, and those come from
+ * the heartbeat and the arrivals table rather than from the aggregate layer
+ * that is still to come. Everything else still throws, so a build pointed at
+ * `live` fails on the first page it renders rather than serving a figure from
+ * a half-filled database.
+ *
+ * When the rest is filled in it reads Postgres for aggregates and history (§11
+ * — not ClickHouse), Redis for the pending-arrival buffer, and subscribes to
+ * the websocket layer for the live feed.
  */
 
 import type {
@@ -29,6 +36,11 @@ import type {
   Range,
   RoutePage,
 } from "@/lib/data/types";
+import { indexerFacts } from "@/lib/db/arrivals";
+import { livenessOf, readHeartbeat } from "@/lib/db/indexer";
+
+/** Everything §7's status strip reads is drawn from the last 24 hours. */
+const STATUS_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 function notImplemented(method: string): never {
   throw new Error(
@@ -68,8 +80,30 @@ export class LiveProvider implements DataProvider {
     notImplemented("getCoverage");
   }
 
+  /**
+   * §7 — the indexer's state, the head slot, the median lag and the share of
+   * value we could not trace.
+   *
+   * The state comes from the heartbeat rather than from how recently something
+   * arrived: those are different questions, and reading the second as the first
+   * calls a quiet hour an outage. See `src/lib/db/indexer.ts`.
+   */
   async getStatus(): Promise<IndexerStatus> {
-    notImplemented("getStatus");
+    const now = Date.now();
+    const [heartbeat, facts] = await Promise.all([
+      readHeartbeat(),
+      indexerFacts(new Date(now - STATUS_WINDOW_MS)),
+    ]);
+
+    return {
+      state: livenessOf(heartbeat, now),
+      // The heartbeat's slot is the head we have actually reached; the
+      // arrivals table only knows about slots that happened to contain one.
+      lastSlot: heartbeat?.lastSlot ?? facts.lastSlot,
+      medianLagMs: facts.medianLagMs,
+      unattributedShare: facts.unattributedShare,
+      updatedAt: heartbeat?.updatedAt ?? facts.updatedAt ?? new Date(now).toISOString(),
+    };
   }
 
   async getHomeSnapshot(): Promise<HomeSnapshot> {
