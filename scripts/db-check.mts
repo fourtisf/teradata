@@ -34,7 +34,10 @@ if (!url) {
 // This truncates. A connection string that does not say "test" is one that
 // might be production, and the cost of being wrong once is the whole dataset.
 if (!/test/i.test(url)) {
-  console.error(`Refusing: POSTGRES_URL does not look like a test database.\n  ${url}`);
+  // Without the password. A refusal is exactly when someone screenshots the
+  // terminal to ask why, and a connection string carries a credential.
+  const shown = url.replace(/\/\/[^@/]*@/, "//[redacted]@");
+  console.error(`Refusing: POSTGRES_URL does not look like a test database.\n  ${shown}`);
   process.exit(1);
 }
 

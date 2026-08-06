@@ -408,6 +408,63 @@ indicators wired to real values". **Every other method still throws**, so a
 build pointed at `live` fails on the first page it renders rather than serving a
 figure from a half-filled database.
 
+## Which credentials are set
+
+```bash
+npm run env:check            # every credential, and what each missing one blocks
+npm run env:check -- --strict   # exit non-zero if a live-critical one is missing
+```
+
+It reads `.env.local` the same way the poster does, so it reports the state the
+processes will actually see rather than the state of your shell. **No value is
+ever printed** — a length and "set" answers "did it get through", and anything
+more is a credential in a terminal that gets screenshotted.
+
+Nothing is required while `DATA_SOURCE=sim`, and the report says so rather than
+listing twenty red lines at someone who has not started P1 yet.
+
+## RPC failover
+
+`src/lib/rpc/` tries each Solana endpoint in turn until one answers.
+
+**It is not a fallback for the Geyser stream.** §2 fixes Helius gRPC because the
+product promises event-to-alert under ten seconds, and a JSON-RPC endpoint
+standing in for the stream would quietly turn ingest into the polling design §2
+refuses. If the stream is down the honest state is `degraded` on the status
+page, not a slower path nobody was told about. This is for the other half the
+env file already describes: gap repair after a restart, and pulling a
+settlement's full transaction.
+
+Three things in it matter more than the code:
+
+- **A public endpoint is not a slower Helius.** It is rate-limited, usually not
+  archival, and can return a shorter history for the same call. Failing over to
+  a node that returns *less* is worse than failing outright, because the result
+  looks complete and is not — the same failure §3.1 refuses when it keeps an
+  unmatched arrival rather than guessing an origin. So every endpoint is
+  tiered, every answer carries which one produced it, and a read that passes
+  `requireComplete` refuses a fallback rather than quietly accepting a short
+  answer. `getTransaction` sets it by default.
+- **A JSON-RPC error is usually an answer, not a failure.** "Invalid params"
+  means the next endpoint will say the same thing, so retrying is a slower way
+  to get the same result and it spends a rate limit doing it. Only the codes
+  meaning *this node cannot help* — behind, unhealthy, block cleaned up — move
+  on.
+- **A failing endpoint is stood down, not retried into the ground.** Without a
+  breaker, every call pays a full timeout against a dead primary before reaching
+  a working fallback, so a provider outage becomes latency everywhere instead of
+  a clean switch. Stood-down endpoints go to the back of the queue rather than
+  being dropped: if everything is failing, one that may have recovered beats
+  refusing.
+
+```bash
+npm run rpc:check   # failover, breaker, provenance — against local HTTP servers
+```
+
+No network and no credentials: local servers stand in for a dead primary, a
+rate-limited one and a healthy fallback. Failover is exactly the code that is
+never exercised until the day it matters.
+
 ## What is verified
 
 Checked against a real browser at 1440px, 920px and 360px:

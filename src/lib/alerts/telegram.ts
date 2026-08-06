@@ -13,6 +13,19 @@ export function telegramConfigured(): boolean {
 }
 
 /**
+ * The bot token is a path segment in every Bot API URL — that is how the API is
+ * designed, and there is no header form to use instead. So it can reach a
+ * thrown error's message, and from there into the JSON that
+ * `/api/alerts/dispatch` returns and the lines the poster logs.
+ *
+ * Undici rarely puts the URL in a message today. "Rarely" is not a property to
+ * leave a credential's confidentiality resting on.
+ */
+function redact(message: string): string {
+  return TELEGRAM.token ? message.split(TELEGRAM.token).join("[token]") : message;
+}
+
+/**
  * `chatId` overrides the configured channel.
  *
  * Broadcasts go to `TELEGRAM_CHAT_ID` and always should. The command handler in
@@ -58,7 +71,7 @@ export async function sendTelegram(text: string, chatId?: string | number): Prom
     }
     return { channel: "telegram", ok: true, id: String(body.result?.message_id ?? "") };
   } catch (error) {
-    return { channel: "telegram", ok: false, reason: (error as Error).message };
+    return { channel: "telegram", ok: false, reason: redact((error as Error).message) };
   }
 }
 
@@ -121,6 +134,6 @@ export async function sendTelegramPhoto(
     }
     return { channel: "telegram", ok: true, id: String(body.result?.message_id ?? "") };
   } catch (error) {
-    return { channel: "telegram", ok: false, reason: (error as Error).message };
+    return { channel: "telegram", ok: false, reason: redact((error as Error).message) };
   }
 }

@@ -15,7 +15,9 @@
     "alerts:test": "tsx --tsconfig tsconfig.json scripts/alert-test.mts",
     "x:verify": "tsx --tsconfig tsconfig.json scripts/x-verify.mts",
     "telegram:webhook": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/telegram-webhook.mts",
-    "db:check": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/db-check.mts"
+    "db:check": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/db-check.mts",
+    "rpc:check": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/rpc-check.mts",
+    "env:check": "tsx --env-file-if-exists=.env.local --tsconfig tsconfig.json scripts/env-check.mts"
   },
   "dependencies": {
     "next": "16.3.0",
